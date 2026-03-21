@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { toDate } from '@/lib/utils';
 
 export default function JoinTripPage() {
   const { tripId } = useParams() as { tripId: string };
@@ -110,7 +111,7 @@ export default function JoinTripPage() {
                 <Calendar className="w-3 h-3 text-teal-500" /> Dates
               </div>
               <span className="text-xs font-bold text-white">
-                {new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                {toDate(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </span>
             </div>
             <div className="flex flex-col gap-1">

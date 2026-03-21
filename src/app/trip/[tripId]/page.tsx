@@ -52,7 +52,7 @@ import {
   ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Share2, Info, ArrowRight, Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, toDate } from '@/lib/utils';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell
 } from 'recharts';
@@ -215,7 +215,7 @@ function ItineraryTab({ firestore, trip, itinerary, isOrganizer, onGoToChecklist
           const items = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
           const dayPlanned = items.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0);
           const dayActual = items.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
-          const dayDate = addDays(new Date(trip.startDate), dayNum - 1);
+          const dayDate = addDays(toDate(trip.startDate), dayNum - 1);
           
           return (
             <AccordionItem key={dayNum} value={`day-${dayNum}`} className="border border-white/5 rounded-[1.5rem] px-4 overflow-hidden bg-white/5 backdrop-blur-sm">
@@ -449,7 +449,7 @@ function ChecklistTab({ firestore, trip, itinerary, isOrganizer }: { firestore: 
   const travelLegs = itinerary?.filter((i: any) => i.category === 'travel') || [];
   
   const [hasUrgentItems, setHasUrgentItems] = useState(false);
-  const tripStartsSoon = new Date(trip.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000;
+  const tripStartsSoon = toDate(trip.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000;
 
   return (
     <div className="space-y-6">

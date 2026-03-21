@@ -14,6 +14,7 @@ import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
+import { toDate } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -166,7 +167,7 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-2 gap-y-4 mb-8">
                     <div className="flex items-center gap-2 text-zinc-400 text-sm font-medium">
                       <Calendar className="w-4 h-4 text-[#0D9488]" />
-                      <span>{new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                      <span>{toDate(trip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                     </div>
                     <div className="flex items-center gap-2 text-zinc-400 text-sm font-medium">
                       <Users className="w-4 h-4 text-[#0D9488]" />

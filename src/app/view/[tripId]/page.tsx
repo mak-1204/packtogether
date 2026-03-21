@@ -10,6 +10,7 @@ import { MapPin, Calendar, Wallet, Plane, Bus, Sparkles, Train, Info } from 'luc
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { toDate } from '@/lib/utils';
 
 export default function PublicTripViewPage() {
   const { tripId } = useParams() as { tripId: string };
@@ -34,7 +35,7 @@ export default function PublicTripViewPage() {
   const totalPlanned = itinerary?.reduce((sum, item) => sum + (item.plannedBudget || 0), 0) || 0;
   const totalActual = itinerary?.reduce((sum, item) => sum + (item.actualBudget || 0), 0) || 0;
   
-  const days = Array.from(new Set(itinerary?.map((i: any) => i.dayNumber) || [1])).sort((a, b) => a - b);
+  const days = Array.from(new Set(itinerary?.map((i: any) => i.dayNumber) || [1])).sort((a, b) => (a as number) - (b as number));
 
   return (
     <div className="min-h-screen bg-[#0F172A] pb-20 text-white selection:bg-[#0D9488] selection:text-white">
@@ -63,7 +64,7 @@ export default function PublicTripViewPage() {
               <div>
                 <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Dates</p>
                 <p className="text-sm font-bold">
-                  {format(new Date(trip.startDate), 'MMM dd')} - {format(new Date(trip.endDate), 'MMM dd')}
+                  {format(toDate(trip.startDate), 'MMM dd')} - {format(toDate(trip.endDate), 'MMM dd')}
                 </p>
               </div>
             </CardContent>
@@ -89,13 +90,13 @@ export default function PublicTripViewPage() {
             {days.map(dayNum => {
               const items = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
               return (
-                <div key={dayNum} className="space-y-6">
+                <div key={dayNum as number} className="space-y-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-[#0D9488]/10 border border-[#0D9488]/20 flex items-center justify-center text-[#0D9488] font-black shadow-lg">
-                      D{dayNum}
+                      D{dayNum as number}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-black text-white">Day {dayNum}</p>
+                      <p className="text-sm font-black text-white">Day {dayNum as number}</p>
                       <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Activity Plan</p>
                     </div>
                   </div>
