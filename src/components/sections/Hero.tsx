@@ -29,11 +29,19 @@ export default function Hero() {
         />
       ))}
 
-      {/* Gradient overlay — hardcoded, never animated, always on top of images */}
+      {/* Gradient overlay — smooth fade on all sides, heaviest at bottom */}
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(to bottom, rgba(15,23,42,0.4) 0%, rgba(15,23,42,0.5) 40%, rgba(15,23,42,0.8) 100%)",
+          background: `
+            linear-gradient(to bottom,
+              rgba(15,23,42,0.5) 0%,
+              rgba(15,23,42,0.2) 20%,
+              rgba(15,23,42,0.1) 50%,
+              rgba(15,23,42,0.6) 75%,
+              rgba(15,23,42,1.0) 100%
+            )
+          `,
           zIndex: 3,
           pointerEvents: "none",
         }}
