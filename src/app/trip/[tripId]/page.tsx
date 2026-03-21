@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -63,7 +62,7 @@ const COLORS = ['#0D9488', '#F7A90A', '#3B82F6', '#8B5CF6', '#EC4899'];
 
 export default function TripDetailsPage() {
   const { tripId } = useParams() as { tripId: string };
-  const { firestore } = useFirestore();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
@@ -596,7 +595,6 @@ function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: { firesto
       await markAiRecommended(firestore, trip.id, winningSuggestion.id, result.aiReason);
       toast({ title: 'AI Picked!', description: `The AI recommends: ${winningSuggestion.notes || winningSuggestion.link}` });
     } catch (error) {
-      console.error(error);
       toast({ variant: 'destructive', title: 'AI Error', description: 'Could not get recommendation.' });
     } finally {
       setIsAiLoading(false);

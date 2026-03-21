@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 
 export default function PublicTripViewPage() {
   const { tripId } = useParams() as { tripId: string };
-  const { firestore } = useFirestore();
+  const firestore = useFirestore();
 
   const tripRef = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
@@ -56,7 +56,6 @@ export default function PublicTripViewPage() {
       </div>
 
       <main className="container max-w-lg mx-auto p-6 space-y-12 -mt-8 relative z-10">
-        {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="bg-white/5 border-white/5 backdrop-blur-xl rounded-[1.5rem] shadow-2xl">
             <CardContent className="p-5 text-center space-y-2">
@@ -80,7 +79,6 @@ export default function PublicTripViewPage() {
           </Card>
         </div>
 
-        {/* Itinerary */}
         <div className="space-y-8">
           <div className="flex items-center gap-4">
             <h3 className="text-2xl font-black text-white tracking-tight">The Itinerary</h3>
@@ -129,7 +127,6 @@ export default function PublicTripViewPage() {
           </div>
         </div>
 
-        {/* Summary */}
         <Card className="bg-[#0D9488]/5 border-[#0D9488]/20 rounded-[2rem] overflow-hidden p-8 text-center space-y-6">
           <div className="space-y-2">
             <p className="text-[10px] text-[#0D9488] font-black uppercase tracking-widest">Financial Summary</p>
@@ -147,7 +144,6 @@ export default function PublicTripViewPage() {
           <p className="text-xs text-zinc-400 font-medium">This trip is currently {totalActual > totalPlanned ? 'over' : 'under'} budget by ₹{Math.abs(totalPlanned - totalActual).toLocaleString()}.</p>
         </Card>
 
-        {/* CTA */}
         <div className="pt-8 space-y-4">
           <Link href={`/create-trip?templateId=${tripId}`} className="w-full block">
             <Button size="lg" className="w-full h-16 rounded-2xl bg-[#0D9488] hover:bg-[#0D9488]/90 text-lg font-black gap-3 shadow-2xl shadow-[#0D9488]/30 transition-all active:scale-95">

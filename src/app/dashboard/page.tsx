@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -18,7 +17,7 @@ import { toast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
-  const { firestore } = useFirestore();
+  const firestore = useFirestore();
   const auth = useAuth();
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -45,7 +44,6 @@ export default function DashboardPage() {
         where(`members.${user.uid}`, '!=', null)
       );
     } catch (e) {
-      console.error("Error creating trips query:", e);
       return null;
     }
   }, [firestore, user]);

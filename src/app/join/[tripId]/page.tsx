@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -17,7 +16,7 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export default function JoinTripPage() {
   const { tripId } = useParams() as { tripId: string };
-  const { firestore } = useFirestore();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
@@ -43,7 +42,6 @@ export default function JoinTripPage() {
       toast({ title: 'Welcome aboard!', description: `You've joined ${trip?.destination}` });
       router.push(`/trip/${tripId}`);
     } catch (error) {
-      console.error(error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not join trip.' });
     } finally {
       setIsJoining(false);
@@ -51,7 +49,6 @@ export default function JoinTripPage() {
   };
 
   useEffect(() => {
-    // If signed in and we have the trip data, join automatically
     if (user && trip && !isJoining) {
       handleJoin();
     }
