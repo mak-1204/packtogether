@@ -27,13 +27,13 @@ export async function getSlideshowSlides(): Promise<SlideshowSlide[]> {
       orderBy("order", "asc")
     );
     const snapshot = await getDocs(q);
+    console.log("Slideshow slides fetched:", snapshot.docs.length);
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as SlideshowSlide[];
   } catch (error) {
-    // In production, errors are handled by the global error listener
-    console.error("Failed to fetch slideshow slides:", error);
+    console.error("Failed to fetch slideshow from Firestore:", error);
     return [];
   }
 }

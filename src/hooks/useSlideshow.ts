@@ -1,10 +1,9 @@
 'use client';
 /**
- * @fileOverview Custom hook for managing the landing page background slideshow state.
- * Handles fetching from Firestore, preloading images, and timed transitions.
+ * @fileOverview Custom hook for managing the landing page background slideshow state from Firestore.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { getSlideshowSlides, type SlideshowSlide } from '@/lib/slideshowService';
 import { SLIDE_DURATION, FADE_DURATION } from '@/lib/slides';
 
@@ -13,67 +12,50 @@ export function useSlideshow() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [slidesLoading, setSlidesLoading] = useState(true);
-  const [isReady, setIsReady] = useState(false);
-  
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Advance to the next slide with a crossfade transition
-  const nextSlide = useCallback(() => {
-    if (slides.length <= 1) return;
-
-    setTransitioning(true);
-    
-    // We update the index AFTER the fade duration would have reasonably started
-    // to allow the UI to handle the "transitioning" state for layering.
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
-      setTransitioning(false);
-    }, FADE_DURATION);
-  }, [slides.length]);
-
+  // Fetch slides from Firestore on mount
   useEffect(() => {
-    async function initSlideshow() {
-      const fetchedSlides = await getSlideshowSlides();
-      setSlides(fetchedSlides);
-      setSlidesLoading(false);
-
-      if (fetchedSlides.length === 0) {
-        setIsReady(true);
-        return;
-      }
-
-      // Preload all images
-      let loadedCount = 0;
-      fetchedSlides.forEach((slide, index) => {
+    async function fetchSlides() {
+      const data = await getSlideshowSlides();
+      if (data.length > 0) {
+        // Preload first image before starting
         const img = new Image();
-        img.src = slide.imageUrl;
+        img.src = data[0].imageUrl;
         img.onload = () => {
-          loadedCount++;
-          // Start the slideshow logic once the first image is ready
-          if (index === 0) {
-            setIsReady(true);
-          }
+          setSlides(data);
+          setSlidesLoading(false);
         };
-      });
+        // Preload remaining images in background
+        data.slice(1).forEach(slide => {
+          const i = new Image();
+          i.src = slide.imageUrl;
+        });
+      } else {
+        setSlidesLoading(false);
+      }
     }
-
-    initSlideshow();
+    fetchSlides();
   }, []);
 
+  // Slideshow interval — only starts after slides are loaded
   useEffect(() => {
-    if (isReady && slides.length > 1) {
-      intervalRef.current = setInterval(nextSlide, SLIDE_DURATION);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isReady, slides.length, nextSlide]);
+    if (slides.length === 0) return;
+
+    const interval = setInterval(() => {
+      setTransitioning(true);
+      setTimeout(() => {
+        setCurrentIndex(prev => (prev + 1) % slides.length);
+        setTransitioning(false);
+      }, FADE_DURATION);
+    }, SLIDE_DURATION);
+
+    return () => clearInterval(interval);
+  }, [slides]);
 
   return {
     currentSlide: slides[currentIndex] || null,
     currentIndex,
     transitioning,
-    slidesLoading: slidesLoading || (!isReady && slides.length > 0),
-    slides
+    slidesLoading,
   };
 }

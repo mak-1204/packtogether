@@ -1,40 +1,31 @@
 'use client';
 
-import Image from 'next/image';
 import { Compass, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
 
 export default function Hero() {
-  const { currentSlide, slides, currentIndex, slidesLoading } = useSlideshow();
+  const { currentSlide, transitioning, slidesLoading } = useSlideshow();
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-zinc-950">
-      {/* Slideshow Container */}
-      {!slidesLoading && slides.length > 0 && (
-        <div className="absolute inset-0">
-          {slides.map((slide, index) => (
-            <div
-              key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentIndex ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
-              <Image
-                src={slide.imageUrl}
-                alt={slide.location}
-                fill
-                priority={index === 0}
-                className={`object-cover ${index === currentIndex ? 'animate-ken-burns' : ''}`}
-                sizes="100vw"
-              />
-            </div>
-          ))}
-        </div>
-      )}
+    <section className="relative h-screen w-full overflow-hidden bg-[#0F172A]">
+      {/* Background image layer */}
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1500ms]"
+        style={{
+          backgroundImage: currentSlide ? `url(${currentSlide.imageUrl})` : "none",
+          opacity: transitioning ? 0 : 1,
+          backgroundColor: "#0F172A",
+        }}
+      />
 
-      {/* Overlay Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
+      {/* Dark overlay — always on top of image */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(to bottom, rgba(15,23,42,0.35) 0%, rgba(15,23,42,0.65) 100%)"
+        }}
+      />
 
       {/* Header / Logo */}
       <header className="absolute top-0 left-0 p-8 z-20">
@@ -62,13 +53,18 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Location Pill */}
+      {/* Location pill — synced to current slide */}
       {!slidesLoading && currentSlide && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white/90 text-sm font-medium animate-in fade-in zoom-in duration-500">
-            <MapPin className="w-4 h-4 text-accent" />
-            <span>{currentSlide.location}</span>
-          </div>
+        <div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white/90 border border-white/10 backdrop-blur-md"
+          style={{
+            backgroundColor: "rgba(15,23,42,0.6)",
+            opacity: transitioning ? 0 : 1,
+            transition: "opacity 0.5s ease-in-out"
+          }}
+        >
+          <MapPin className="w-4 h-4 text-accent" />
+          <span>{currentSlide.location}</span>
         </div>
       )}
     </section>
