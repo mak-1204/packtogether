@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Compass, Loader2, Smartphone, ArrowRight, User } from 'lucide-react';
+import { Compass, Loader2, Smartphone, ArrowRight, User, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -37,10 +37,8 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       const email = getPseudoEmail(mobile);
-      // Check if user exists (Firebase doesn't have a direct check, so we attempt to fetch a profile or use auth logic)
-      // For this prototype, we'll try to sign in with a dummy password to see if user exists
-      // But more reliably, we'll just check our 'users' collection
-      const userDoc = await getDoc(doc(firestore, 'users', mobile));
+      // Check if user exists
+      const userDoc = await getDoc(doc(firestore, 'users_by_mobile', mobile));
       
       if (userDoc.exists()) {
         setStep('login');
@@ -72,7 +70,7 @@ export default function AuthPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || password.length < 6) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Name required and password must be 6+ chars.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Name required and password must be 6+ characters.' });
       return;
     }
 
@@ -101,9 +99,14 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4 relative">
+      <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 group text-zinc-400 hover:text-white transition-colors">
+        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm font-bold uppercase tracking-widest">Back to Home</span>
+      </Link>
+
       <Link href="/" className="mb-12 flex items-center gap-2">
-        <Compass className="w-10 h-10 text-[#0D9488]" />
+        <Compass className="w-12 h-12 text-[#0D9488]" />
         <span className="text-3xl font-black tracking-tighter text-white">PackTogether</span>
       </Link>
 
