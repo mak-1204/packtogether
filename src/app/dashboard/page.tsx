@@ -7,7 +7,20 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, LogOut, Plane, MapPin, Users, Calendar, Wallet, Copy, Compass, Loader2 } from 'lucide-react';
+import { 
+  Plus, LogOut, Plane, MapPin, Users, Calendar, Wallet, Copy, Compass, Loader2, Trash2 
+} from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -15,6 +28,7 @@ import { useAuth } from '@/firebase';
 import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
 import { toDate } from '@/lib/utils';
+import { deleteTrip } from '@/lib/firestore-actions';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -88,6 +102,16 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteTrip = async (tripId: string) => {
+    if (!firestore) return;
+    try {
+      await deleteTrip(firestore, tripId);
+      toast({ title: "Trip Deleted", description: "The trip has been removed from your list." });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: "Error", description: error.message || "Could not delete trip." });
+    }
+  };
+
   const firstName = userProfile?.firstName || user.displayName?.split(" ")[0] || 'Traveler';
 
   return (
@@ -157,7 +181,33 @@ export default function DashboardPage() {
                     <h3 className="text-2xl font-black text-white leading-tight tracking-tight">{trip.destination}</h3>
                     <p className="text-zinc-300 text-sm font-medium opacity-80">{trip.name}</p>
                   </div>
-                  <div className="absolute top-4 right-6">
+                  <div className="absolute top-4 right-6 flex gap-2">
+                    {trip.organizerId === user.uid && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-black/40 text-white hover:bg-red-500 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-[#0F172A] border-white/10 rounded-[2rem]">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-white font-black text-xl">Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-zinc-400">
+                              This will permanently delete the trip to {trip.destination}. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl">Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteTrip(trip.id)}
+                              className="bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold"
+                            >
+                              Delete Trip
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                     <Badge className="bg-[#0D9488] text-white font-black px-3 py-1 border-none shadow-lg">
                       {trip.status}
                     </Badge>

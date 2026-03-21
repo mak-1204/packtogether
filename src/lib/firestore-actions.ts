@@ -48,6 +48,11 @@ export async function createTrip(db: Firestore, tripData: any, userId: string) {
   }
 }
 
+export async function deleteTrip(db: Firestore, tripId: string) {
+  const tripRef = doc(db, 'trips', tripId);
+  return deleteDoc(tripRef);
+}
+
 export async function joinTrip(db: Firestore, tripId: string, memberData: { name: string, email: string, uid: string, photoURL?: string | null }) {
   const membersRef = collection(db, 'trips', tripId, 'members');
   const memberId = memberData.uid;
