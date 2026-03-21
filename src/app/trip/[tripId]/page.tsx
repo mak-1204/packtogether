@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { doc, collection, query, orderBy } from 'firebase/firestore';
+import { doc, collection, query, orderBy, Firestore } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   updateActualBudget, 
@@ -76,22 +76,38 @@ export default function TripDetailsPage() {
 
   const itineraryQuery = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
-    return query(collection(firestore, 'trips', tripId, 'itineraryItems'), orderBy('dayNumber'), orderBy('createdAt'));
+    try {
+      return query(collection(firestore, 'trips', tripId, 'itineraryItems'), orderBy('dayNumber'), orderBy('createdAt'));
+    } catch (e) {
+      return null;
+    }
   }, [firestore, tripId]);
 
   const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
-    return query(collection(firestore, 'trips', tripId, 'suggestions'), orderBy('createdAt', 'desc'));
+    try {
+      return query(collection(firestore, 'trips', tripId, 'suggestions'), orderBy('createdAt', 'desc'));
+    } catch (e) {
+      return null;
+    }
   }, [firestore, tripId]);
 
   const packingQuery = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
-    return query(collection(firestore, 'trips', tripId, 'packingItems'), orderBy('createdAt'));
+    try {
+      return query(collection(firestore, 'trips', tripId, 'packingItems'), orderBy('createdAt'));
+    } catch (e) {
+      return null;
+    }
   }, [firestore, tripId]);
 
   const membersQuery = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
-    return query(collection(firestore, 'trips', tripId, 'members'), orderBy('joinedAt'));
+    try {
+      return query(collection(firestore, 'trips', tripId, 'members'), orderBy('joinedAt'));
+    } catch (e) {
+      return null;
+    }
   }, [firestore, tripId]);
 
   const { data: trip, isLoading: isTripLoading } = useDoc(tripRef);
@@ -110,7 +126,7 @@ export default function TripDetailsPage() {
   }, [isTripLoading, isUserLoading, trip, isOrganizer, isMember, tripId, router]);
 
   if (isTripLoading || isUserLoading) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-teal-500"><Loader2 className="animate-spin" /></div>;
-  if (!trip) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white font-bold">Trip not found.</div>;
+  if (!trip || !firestore) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white font-bold">Trip not found.</div>;
 
   const totalPlanned = itinerary?.reduce((sum, item) => sum + (item.plannedBudget || 0), 0) || 0;
   const totalActual = itinerary?.reduce((sum, item) => sum + (item.actualBudget || 0), 0) || 0;
@@ -140,19 +156,19 @@ export default function TripDetailsPage() {
       <main className="container max-w-lg mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="itinerary" className="mt-0">
-            <ItineraryTab trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} onGoToChecklist={() => setActiveTab('checklist')} />
+            <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} onGoToChecklist={() => setActiveTab('checklist')} />
           </TabsContent>
           <TabsContent value="checklist" className="mt-0">
-            <ChecklistTab trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
+            <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
           </TabsContent>
           <TabsContent value="suggestions" className="mt-0">
-            <SuggestionsTab trip={trip} suggestions={suggestions} isOrganizer={isOrganizer} />
+            <SuggestionsTab firestore={firestore} trip={trip} suggestions={suggestions} isOrganizer={isOrganizer} />
           </TabsContent>
           <TabsContent value="packing" className="mt-0">
-            <PackingTab trip={trip} packing={packing} isOrganizer={isOrganizer} />
+            <PackingTab firestore={firestore} trip={trip} packing={packing} isOrganizer={isOrganizer} />
           </TabsContent>
           <TabsContent value="summary" className="mt-0">
-            <SummaryTab trip={trip} itinerary={itinerary} members={members} isOrganizer={isOrganizer} />
+            <SummaryTab firestore={firestore} trip={trip} itinerary={itinerary} members={members} isOrganizer={isOrganizer} />
           </TabsContent>
 
           <TabsList className="fixed bottom-0 left-0 right-0 h-16 bg-[#0F172A] border-t border-white/5 rounded-none grid grid-cols-5 z-50 p-0">
@@ -183,8 +199,7 @@ export default function TripDetailsPage() {
   );
 }
 
-function ItineraryTab({ trip, itinerary, isOrganizer, onGoToChecklist }: any) {
-  const { firestore } = useFirestore();
+function ItineraryTab({ firestore, trip, itinerary, isOrganizer, onGoToChecklist }: { firestore: Firestore, trip: any, itinerary: any, isOrganizer: boolean, onGoToChecklist: () => void }) {
   const [maxDay, setMaxDay] = useState(1);
 
   useEffect(() => {
@@ -243,7 +258,7 @@ function ItineraryTab({ trip, itinerary, isOrganizer, onGoToChecklist }: any) {
                                   variant="ghost" 
                                   size="icon" 
                                   className="h-6 w-6 text-zinc-500 hover:text-red-500"
-                                  onClick={() => deleteItineraryItem(firestore!, trip.id, item.id)}
+                                  onClick={() => deleteItineraryItem(firestore, trip.id, item.id)}
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
@@ -258,7 +273,7 @@ function ItineraryTab({ trip, itinerary, isOrganizer, onGoToChecklist }: any) {
                                 className="h-8 pl-5 text-[10px] bg-black/40 border-white/5 rounded-lg focus:border-teal-500 transition-colors" 
                                 placeholder="Actual"
                                 defaultValue={item.actualBudget || ''}
-                                onBlur={(e) => updateActualBudget(firestore!, trip.id, item.id, Number(e.target.value))}
+                                onBlur={(e) => updateActualBudget(firestore, trip.id, item.id, Number(e.target.value))}
                               />
                             </div>
                             {item.notes && (
@@ -279,7 +294,7 @@ function ItineraryTab({ trip, itinerary, isOrganizer, onGoToChecklist }: any) {
                   </Card>
                 ))}
                 {isOrganizer && (
-                  <AddItemDialog tripId={trip.id} dayNumber={dayNum} />
+                  <AddItemDialog firestore={firestore} tripId={trip.id} dayNumber={dayNum} />
                 )}
               </AccordionContent>
             </AccordionItem>
@@ -312,8 +327,7 @@ function ItineraryTab({ trip, itinerary, isOrganizer, onGoToChecklist }: any) {
   );
 }
 
-function AddItemDialog({ tripId, dayNumber }: { tripId: string, dayNumber: number }) {
-  const { firestore } = useFirestore();
+function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore, tripId: string, dayNumber: number }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('activity');
   const [planned, setPlanned] = useState('');
@@ -340,7 +354,7 @@ function AddItemDialog({ tripId, dayNumber }: { tripId: string, dayNumber: numbe
       data.toLocation = to;
       data.departureTime = time;
     }
-    await addItineraryItem(firestore!, tripId, data);
+    await addItineraryItem(firestore, tripId, data);
     setOpen(false);
     reset();
   };
@@ -432,7 +446,7 @@ function AddItemDialog({ tripId, dayNumber }: { tripId: string, dayNumber: numbe
   );
 }
 
-function ChecklistTab({ trip, itinerary, isOrganizer }: any) {
+function ChecklistTab({ firestore, trip, itinerary, isOrganizer }: { firestore: Firestore, trip: any, itinerary: any, isOrganizer: boolean }) {
   const travelLegs = itinerary?.filter((i: any) => i.category === 'travel') || [];
   
   const [hasUrgentItems, setHasUrgentItems] = useState(false);
@@ -456,6 +470,7 @@ function ChecklistTab({ trip, itinerary, isOrganizer }: any) {
         {travelLegs.map((leg: any) => (
           <LegChecklistCard 
             key={leg.id} 
+            firestore={firestore}
             leg={leg} 
             tripId={trip.id} 
             isOrganizer={isOrganizer} 
@@ -467,11 +482,14 @@ function ChecklistTab({ trip, itinerary, isOrganizer }: any) {
   );
 }
 
-function LegChecklistCard({ leg, tripId, isOrganizer, onUrgentChange }: any) {
-  const { firestore } = useFirestore();
+function LegChecklistCard({ firestore, leg, tripId, isOrganizer, onUrgentChange }: { firestore: Firestore, leg: any, tripId: string, isOrganizer: boolean, onUrgentChange: (urgent: boolean) => void }) {
   const checklistQuery = useMemoFirebase(() => {
     if (!firestore || !tripId || !leg.id) return null;
-    return query(collection(firestore, 'trips', tripId, 'itineraryItems', leg.id, 'checklistItems'), orderBy('order'));
+    try {
+      return query(collection(firestore, 'trips', tripId, 'itineraryItems', leg.id, 'checklistItems'), orderBy('order'));
+    } catch (e) {
+      return null;
+    }
   }, [firestore, tripId, leg.id]);
 
   const { data: checks } = useCollection(checklistQuery);
@@ -487,7 +505,7 @@ function LegChecklistCard({ leg, tripId, isOrganizer, onUrgentChange }: any) {
     const order = ['red', 'yellow', 'green'];
     const currentIndex = order.indexOf(check.status);
     const nextStatus = order[(currentIndex + 1) % order.length];
-    await updateChecklistItemStatus(firestore!, tripId, leg.id, check.id, nextStatus);
+    await updateChecklistItemStatus(firestore, tripId, leg.id, check.id, nextStatus);
   };
 
   return (
@@ -540,8 +558,7 @@ function LegChecklistCard({ leg, tripId, isOrganizer, onUrgentChange }: any) {
   );
 }
 
-function SuggestionsTab({ trip, suggestions, isOrganizer }: any) {
-  const { firestore } = useFirestore();
+function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: { firestore: Firestore, trip: any, suggestions: any, isOrganizer: boolean }) {
   const { user } = useUser();
   const [link, setLink] = useState('');
   const [notes, setNotes] = useState('');
@@ -549,7 +566,7 @@ function SuggestionsTab({ trip, suggestions, isOrganizer }: any) {
 
   const handleAdd = async () => {
     if (!link) return;
-    await addSuggestion(firestore!, trip.id, {
+    await addSuggestion(firestore, trip.id, {
       link,
       notes,
       addedBy: user?.displayName || user?.email?.split('@')[0] || 'Member'
@@ -576,7 +593,7 @@ function SuggestionsTab({ trip, suggestions, isOrganizer }: any) {
       });
       
       const winningSuggestion = suggestions[result.recommendedSuggestionIndex];
-      await markAiRecommended(firestore!, trip.id, winningSuggestion.id, result.aiReason);
+      await markAiRecommended(firestore, trip.id, winningSuggestion.id, result.aiReason);
       toast({ title: 'AI Picked!', description: `The AI recommends: ${winningSuggestion.notes || winningSuggestion.link}` });
     } catch (error) {
       console.error(error);
@@ -618,7 +635,7 @@ function SuggestionsTab({ trip, suggestions, isOrganizer }: any) {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xs font-black uppercase text-zinc-300">
-                    {s.addedBy[0]}
+                    {s.addedBy ? s.addedBy[0] : '?'}
                   </div>
                   <div>
                     <p className="text-xs font-black text-white">{s.addedBy}</p>
@@ -650,8 +667,7 @@ function SuggestionsTab({ trip, suggestions, isOrganizer }: any) {
   );
 }
 
-function PackingTab({ trip, packing, isOrganizer }: any) {
-  const { firestore } = useFirestore();
+function PackingTab({ firestore, trip, packing, isOrganizer }: { firestore: Firestore, trip: any, packing: any, isOrganizer: boolean }) {
   const [item, setItem] = useState('');
   
   const packedCount = packing?.filter((i: any) => i.isPacked).length || 0;
@@ -660,7 +676,7 @@ function PackingTab({ trip, packing, isOrganizer }: any) {
 
   const handleAdd = async () => {
     if (!item) return;
-    await addPackingItem(firestore!, trip.id, { name: item });
+    await addPackingItem(firestore, trip.id, { name: item });
     setItem('');
   };
 
@@ -688,7 +704,7 @@ function PackingTab({ trip, packing, isOrganizer }: any) {
               "flex items-center justify-between p-5 rounded-[1.25rem] border border-white/5 transition-all cursor-pointer",
               i.isPacked ? "bg-teal-500/5 opacity-40" : "bg-white/5"
             )}
-            onClick={() => togglePackedStatus(firestore!, trip.id, i.id, i.isPacked)}
+            onClick={() => togglePackedStatus(firestore, trip.id, i.id, i.isPacked)}
           >
             <div className="flex items-center gap-4">
               {i.isPacked ? <CheckCircle2 className="w-6 h-6 text-teal-500" /> : <Circle className="w-6 h-6 text-zinc-500" />}
@@ -699,7 +715,7 @@ function PackingTab({ trip, packing, isOrganizer }: any) {
                 variant="ghost" 
                 size="icon" 
                 className="h-10 w-10 text-zinc-500 hover:text-red-500"
-                onClick={(e) => { e.stopPropagation(); deletePackingItem(firestore!, trip.id, i.id); }}
+                onClick={(e) => { e.stopPropagation(); deletePackingItem(firestore, trip.id, i.id); }}
               >
                 <Trash2 className="w-5 h-5" />
               </Button>
@@ -711,8 +727,7 @@ function PackingTab({ trip, packing, isOrganizer }: any) {
   );
 }
 
-function SummaryTab({ trip, itinerary, members, isOrganizer }: any) {
-  const { firestore } = useFirestore();
+function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { firestore: Firestore, trip: any, itinerary: any, members: any, isOrganizer: boolean }) {
   const router = useRouter();
 
   const totalActual = itinerary?.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0;
@@ -785,7 +800,7 @@ function SummaryTab({ trip, itinerary, members, isOrganizer }: any) {
               <Avatar className="h-9 w-9 border border-white/10">
                 <AvatarImage src={m.photoURL || ''} />
                 <AvatarFallback className="bg-teal-500/20 text-teal-500 text-sm font-black">
-                  {m.name[0].toUpperCase()}
+                  {m.name ? m.name[0].toUpperCase() : '?'}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
@@ -808,7 +823,7 @@ function SummaryTab({ trip, itinerary, members, isOrganizer }: any) {
           <Button 
             className="w-full h-16 rounded-[1.5rem] bg-teal-500 hover:bg-teal-600 font-black text-lg shadow-xl shadow-teal-500/20"
             onClick={async () => {
-              await markTripComplete(firestore!, trip.id);
+              await markTripComplete(firestore, trip.id);
               toast({ title: 'Trip Completed! 🏁', description: 'Hope you had a blast.' });
               router.push('/dashboard');
             }}

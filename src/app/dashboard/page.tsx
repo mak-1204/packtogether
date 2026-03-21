@@ -39,10 +39,15 @@ export default function DashboardPage() {
 
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(
-      collection(firestore, 'trips'),
-      where(`members.${user.uid}`, '!=', null)
-    );
+    try {
+      return query(
+        collection(firestore, 'trips'),
+        where(`members.${user.uid}`, '!=', null)
+      );
+    } catch (e) {
+      console.error("Error creating trips query:", e);
+      return null;
+    }
   }, [firestore, user]);
 
   const { data: trips, isLoading: isTripsLoading } = useCollection(tripsQuery);
