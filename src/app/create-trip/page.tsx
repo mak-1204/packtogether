@@ -39,12 +39,14 @@ function CreateTripContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTripId, setCreatedTripId] = useState<string | null>(null);
 
+  // Guard — Redirect only after we are sure the user isn't logged in
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/auth');
     }
   }, [user, isUserLoading, router]);
 
+  // Load template data if available
   useEffect(() => {
     if (templateId && firestore) {
       const fetchTemplate = async () => {
@@ -63,18 +65,38 @@ function CreateTripContent() {
     }
   }, [templateId, firestore]);
 
-  if (isUserLoading || !user) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]"><Loader2 className="animate-spin" /></div>;
+  // Handle loading state
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]">
+        <Loader2 className="animate-spin w-12 h-12" />
+      </div>
+    );
+  }
+
+  // Prevent rendering if confirmed not logged in
+  if (!user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !firestore) {
-      toast({ variant: 'destructive', title: 'Session Error', description: 'You must be logged in to create a trip.' });
+    // Secondary Guard — Auth check during submit
+    if (!user?.uid || !firestore) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Session Error', 
+        description: 'Your session has expired. Please sign in again.' 
+      });
+      router.push('/auth');
       return;
     }
 
     if (!name || !destination || !startDate || !endDate || !budget) {
-      toast({ variant: 'destructive', title: 'Missing fields', description: 'Please fill in all details.' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Missing fields', 
+        description: 'Please fill in all details before creating your trip.' 
+      });
       return;
     }
 
@@ -266,7 +288,11 @@ function CreateTripContent() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-14 bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg font-black rounded-2xl mt-4 shadow-xl shadow-[#0D9488]/20 transition-all active:scale-95" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              className="w-full h-14 bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg font-black rounded-2xl mt-4 shadow-xl shadow-[#0D9488]/20 transition-all active:scale-95" 
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Creating...' : 'Create Trip & Get Link'}
             </Button>
           </form>
