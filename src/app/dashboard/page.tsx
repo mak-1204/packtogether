@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, LogOut, Plane, MapPin, Users, Calendar, Wallet, Copy, Compass } from 'lucide-react';
+import { Plus, LogOut, Plane, MapPin, Users, Calendar, Wallet, Copy, Compass, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -39,8 +39,8 @@ export default function DashboardPage() {
 
   if (isUserLoading || !user) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white">
-        Loading your adventures...
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]">
+        <Loader2 className="animate-spin" />
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white pb-24">
+    <div className="min-h-screen bg-[#0F172A] text-white pb-24 selection:bg-[#0D9488] selection:text-white">
       {/* Top Bar */}
       <header className="border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-lg sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between px-4 mx-auto max-w-7xl">
@@ -111,17 +111,17 @@ export default function DashboardPage() {
 
         {isTripsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map(i => <div key={i} className="h-80 rounded-3xl bg-white/5 animate-pulse" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-80 rounded-[2rem] bg-white/5 animate-pulse" />)}
           </div>
         ) : !trips || trips.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-white/5 rounded-[2rem] border border-white/5 px-6">
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white/5 rounded-[2.5rem] border border-white/5 px-6 shadow-2xl">
             <div className="w-24 h-24 bg-[#0D9488]/10 rounded-full flex items-center justify-center mb-8 border border-[#0D9488]/20">
               <Plane className="w-12 h-12 text-[#0D9488]" />
             </div>
             <h2 className="text-2xl font-bold mb-3">No trips yet</h2>
             <p className="text-zinc-400 mb-10 max-w-sm">Create your first trip and start planning with your gang!</p>
             <Link href="/create-trip">
-              <Button size="lg" className="bg-[#0D9488] hover:bg-[#0D9488]/90 rounded-full px-10 h-14 text-lg font-bold shadow-2xl shadow-[#0D9488]/20">
+              <Button size="lg" className="bg-[#0D9488] hover:bg-[#0D9488]/90 rounded-full px-10 h-14 text-lg font-bold shadow-2xl shadow-[#0D9488]/20 transition-all active:scale-95">
                 Create Trip
               </Button>
             </Link>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {trips.map((trip) => (
-              <Card key={trip.id} className="overflow-hidden border-white/5 bg-white/5 hover:bg-white/[0.08] transition-all group rounded-[2rem]">
+              <Card key={trip.id} className="overflow-hidden border-white/5 bg-white/5 hover:bg-white/[0.08] transition-all group rounded-[2.5rem] shadow-xl">
                 <div className="relative h-48 w-full">
                   <Image 
                     src={trip.coverImageUrl || `https://picsum.photos/seed/${trip.id}/400/200`} 
@@ -139,11 +139,11 @@ export default function DashboardPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/20 to-transparent" />
                   <div className="absolute bottom-4 left-6">
-                    <h3 className="text-2xl font-black text-white leading-tight">{trip.destination}</h3>
+                    <h3 className="text-2xl font-black text-white leading-tight tracking-tight">{trip.destination}</h3>
                     <p className="text-zinc-300 text-sm font-medium opacity-80">{trip.name}</p>
                   </div>
                   <div className="absolute top-4 right-6">
-                    <Badge className="bg-white/10 backdrop-blur-md border-white/10 text-white font-bold px-3 py-1">
+                    <Badge className="bg-[#0D9488] text-white font-black px-3 py-1 border-none">
                       {trip.status}
                     </Badge>
                   </div>
@@ -169,18 +169,18 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex gap-3">
                     <Link href={`/trip/${trip.id}`} className="flex-1">
-                      <Button className="w-full bg-[#0D9488] hover:bg-[#0D9488]/90 font-bold rounded-xl h-12">
+                      <Button className="w-full bg-[#0D9488] hover:bg-[#0D9488]/90 font-black rounded-xl h-12 transition-all active:scale-95 shadow-lg shadow-[#0D9488]/10">
                         Open Trip
                       </Button>
                     </Link>
                     <Button 
                       variant="outline" 
                       size="icon" 
-                      className="border-white/10 bg-transparent hover:bg-white/5 rounded-xl h-12 w-12"
+                      className="border-white/10 bg-transparent hover:bg-white/5 rounded-xl h-12 w-12 transition-all active:scale-90"
                       title="Use as Template"
                       onClick={() => handleCloneTemplate(trip)}
                     >
-                      <Copy className="w-5 h-5" />
+                      <Copy className="w-5 h-5 text-zinc-400" />
                     </Button>
                   </div>
                 </CardContent>
@@ -191,7 +191,7 @@ export default function DashboardPage() {
       </main>
 
       <Link href="/create-trip">
-        <Button size="icon" className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-[#0D9488] hover:bg-[#0D9488]/90 shadow-2xl shadow-[#0D9488]/40 z-50">
+        <Button size="icon" className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-[#0D9488] hover:bg-[#0D9488]/90 shadow-2xl shadow-[#0D9488]/40 z-50 transition-all active:scale-90">
           <Plus className="w-8 h-8" />
         </Button>
       </Link>

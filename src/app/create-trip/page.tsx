@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useUser, useFirestore } from '@/firebase';
+import { useState, useEffect, Suspense } from 'react';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { createTrip } from '@/lib/firestore-actions';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Copy, Share2, ArrowRight, Compass, CheckCircle2 } from 'lucide-react';
+import { CalendarIcon, Copy, Share2, ArrowRight, Compass, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { doc, getDoc } from 'firebase/firestore';
 
 const VIBES = [
   { id: 'Budget', icon: '🏕️', label: 'Budget' },
@@ -22,16 +23,12 @@ const VIBES = [
   { id: 'Luxury', icon: '👑', label: 'Luxury' },
 ];
 
-export default function CreateTripPage() {
+function CreateTripContent() {
   const { user, isUserLoading } = useUser();
   const { firestore } = useFirestore();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/');
-    }
-  }, [user, isUserLoading, router]);
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get('templateId');
 
   const [name, setName] = useState('');
   const [destination, setDestination] = useState('');
@@ -42,7 +39,32 @@ export default function CreateTripPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTripId, setCreatedTripId] = useState<string | null>(null);
 
-  if (isUserLoading || !user) return null;
+  // Handle template pre-filling
+  useEffect(() => {
+    if (templateId && firestore) {
+      const fetchTemplate = async () => {
+        const docRef = doc(firestore, 'trips', templateId);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          setName(`${data.name} (Copy)`);
+          setDestination(data.destination);
+          setBudget(data.budgetPerHead?.toString() || '');
+          setVibe(data.vibe || 'Mid-Range');
+          toast({ title: "Template loaded!", description: `Pre-filled details for ${data.destination}` });
+        }
+      };
+      fetchTemplate();
+    }
+  }, [templateId, firestore]);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || !user) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]"><Loader2 className="animate-spin" /></div>;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,15 +155,16 @@ export default function CreateTripPage() {
       </Link>
 
       <Card className="max-w-[480px] w-full border-white/5 bg-white/5 shadow-2xl rounded-[2.5rem]">
-        <CardHeader className="pt-8">
-          <CardTitle className="text-2xl font-black text-center text-white tracking-tight">Plan a New Trip ✈️</CardTitle>
+        <CardHeader className="pt-8 text-center">
+          <CardTitle className="text-2xl font-black text-white tracking-tight">Plan a New Trip ✈️</CardTitle>
+          <p className="text-zinc-500 text-xs mt-1 uppercase font-black tracking-widest">Your Gang. One Plan.</p>
         </CardHeader>
         <CardContent className="px-8 pb-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Trip Name</Label>
               <Input 
-                className="bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488]" 
+                className="bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488] text-white" 
                 placeholder="e.g. Ooty Escapade" 
                 value={name} 
                 onChange={e => setName(e.target.value)} 
@@ -152,7 +175,7 @@ export default function CreateTripPage() {
             <div className="space-y-2">
               <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Destination</Label>
               <Input 
-                className="bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488]" 
+                className="bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488] text-white" 
                 placeholder="e.g. Ooty, Tamil Nadu" 
                 value={destination} 
                 onChange={e => setDestination(e.target.value)} 
@@ -197,7 +220,7 @@ export default function CreateTripPage() {
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0D9488] font-bold">₹</span>
                 <Input 
                   type="number" 
-                  className="pl-8 bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488]" 
+                  className="pl-8 bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488] text-white" 
                   placeholder="5000" 
                   value={budget} 
                   onChange={e => setBudget(e.target.value)} 
@@ -222,7 +245,7 @@ export default function CreateTripPage() {
                     )}
                   >
                     <span className="text-2xl mb-1">{v.icon}</span>
-                    <span className="text-[10px] font-black uppercase tracking-tight">{v.label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight text-white">{v.label}</span>
                   </button>
                 ))}
               </div>
@@ -235,5 +258,13 @@ export default function CreateTripPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CreateTripPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]"><Loader2 className="animate-spin" /></div>}>
+      <CreateTripContent />
+    </Suspense>
   );
 }
