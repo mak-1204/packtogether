@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -49,7 +50,7 @@ import {
 import { 
   Calendar as CalendarIcon, CheckSquare, Lightbulb, Package, PieChart, 
   Plus, MapPin, CheckCircle2, Circle, Trash2, 
-  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Info, ArrowRight, Loader2
+  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Info, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -59,6 +60,7 @@ import {
 import { format, addDays } from 'date-fns';
 
 const COLORS = ['#0D9488', '#F7A90A', '#3B82F6', '#8B5CF6', '#EC4899'];
+const TIME_SLOTS = ['Morning', 'Afternoon', 'Evening', 'Night'] as const;
 
 export default function TripDetailsPage() {
   const params = useParams();
@@ -209,13 +211,23 @@ function ItineraryTab({ firestore, trip, itinerary, isOrganizer, onGoToChecklist
 
   const days = Array.from({ length: maxDay }, (_, i) => i + 1);
 
+  const getSlotIcon = (slot: string) => {
+    switch (slot) {
+      case 'Morning': return <Coffee className="w-3 h-3" />;
+      case 'Afternoon': return <Sun className="w-3 h-3" />;
+      case 'Evening': return <Sunset className="w-3 h-3" />;
+      case 'Night': return <Moon className="w-3 h-3" />;
+      default: return null;
+    }
+  };
+
   return (
     <div className="space-y-6 pb-24">
       <Accordion type="multiple" defaultValue={['day-1']} className="w-full space-y-4">
         {days.map(dayNum => {
-          const items = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
-          const dayPlanned = items.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0);
-          const dayActual = items.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
+          const dayItems = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
+          const dayPlanned = dayItems.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0);
+          const dayActual = dayItems.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
           const dayDate = addDays(toDate(trip.startDate), dayNum - 1);
           
           return (
@@ -228,71 +240,89 @@ function ItineraryTab({ firestore, trip, itinerary, isOrganizer, onGoToChecklist
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="space-y-3 pb-4">
-                {items.length === 0 ? (
-                  <p className="text-center py-4 text-zinc-500 text-xs italic">No activities planned for this day.</p>
-                ) : items.map((item: any) => (
-                  <Card key={item.id} className="bg-black/20 border-white/5 rounded-2xl">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div 
-                          className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-transform active:scale-95 shadow-lg",
-                            item.category === 'travel' ? "bg-teal-500 text-white" : "bg-white/10 text-zinc-400"
-                          )}
-                          onClick={() => item.category === 'travel' && onGoToChecklist()}
-                        >
-                          {item.category === 'transport' ? <Bus className="w-5 h-5" /> :
-                           item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
-                           item.category === 'travel' ? <Train className="w-5 h-5" /> :
-                           item.category === 'stay' ? <MapPin className="w-5 h-5" /> :
-                           <MapPin className="w-5 h-5" />}
+              <AccordionContent className="space-y-6 pb-4">
+                {TIME_SLOTS.map(slot => {
+                  const slotItems = dayItems.filter((i: any) => i.timeSlot === slot || (!i.timeSlot && slot === 'Morning' && dayItems.indexOf(i) === 0));
+                  
+                  if (slotItems.length === 0 && !isOrganizer) return null;
+
+                  return (
+                    <div key={slot} className="space-y-3">
+                      <div className="flex items-center gap-2 px-1">
+                        <div className="text-[#0D9488] opacity-60">
+                          {getSlotIcon(slot)}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <h4 className="font-bold truncate text-sm text-white">{item.name}</h4>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black text-zinc-500">₹{item.plannedBudget}</span>
-                              {isOrganizer && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-6 w-6 text-zinc-500 hover:text-red-500"
-                                  onClick={() => deleteItineraryItem(firestore, trip.id, item.id)}
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <div className="relative flex-1 max-w-[100px]">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-teal-500 font-bold">₹</span>
-                              <Input 
-                                type="number" 
-                                className="h-8 pl-5 text-[10px] bg-black/40 border-white/5 rounded-lg focus:border-teal-500 transition-colors" 
-                                placeholder="Actual"
-                                defaultValue={item.actualBudget || ''}
-                                onBlur={(e) => updateActualBudget(firestore, trip.id, item.id, Number(e.target.value))}
-                              />
-                            </div>
-                            {item.notes && (
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400"><Info className="w-4 h-4" /></Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-xs bg-[#0F172A] border-white/5 rounded-2xl">
-                                  <DialogHeader><DialogTitle className="text-white font-black">{item.name} Notes</DialogTitle></DialogHeader>
-                                  <p className="text-sm text-zinc-400 leading-relaxed">{item.notes}</p>
-                                </DialogContent>
-                              </Dialog>
-                            )}
-                          </div>
-                        </div>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{slot}</h3>
+                        <div className="h-px flex-1 bg-white/5" />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      
+                      <div className="space-y-3">
+                        {slotItems.map((item: any) => (
+                          <Card key={item.id} className="bg-black/20 border-white/5 rounded-2xl">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div 
+                                  className={cn(
+                                    "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-transform active:scale-95 shadow-lg",
+                                    item.category === 'travel' ? "bg-teal-500 text-white" : "bg-white/10 text-zinc-400"
+                                  )}
+                                  onClick={() => item.category === 'travel' && onGoToChecklist()}
+                                >
+                                  {item.category === 'transport' ? <Bus className="w-5 h-5" /> :
+                                   item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
+                                   item.category === 'travel' ? <Train className="w-5 h-5" /> :
+                                   item.category === 'stay' ? <MapPin className="w-5 h-5" /> :
+                                   <MapPin className="w-5 h-5" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h4 className="font-bold truncate text-sm text-white">{item.name}</h4>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-black text-zinc-500">₹{item.plannedBudget}</span>
+                                      {isOrganizer && (
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon" 
+                                          className="h-6 w-6 text-zinc-500 hover:text-red-500"
+                                          onClick={() => deleteItineraryItem(firestore, trip.id, item.id)}
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <div className="relative flex-1 max-w-[100px]">
+                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-teal-500 font-bold">₹</span>
+                                      <Input 
+                                        type="number" 
+                                        className="h-8 pl-5 text-[10px] bg-black/40 border-white/5 rounded-lg focus:border-teal-500 transition-colors" 
+                                        placeholder="Actual"
+                                        defaultValue={item.actualBudget || ''}
+                                        onBlur={(e) => updateActualBudget(firestore, trip.id, item.id, Number(e.target.value))}
+                                      />
+                                    </div>
+                                    {item.notes && (
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400"><Info className="w-4 h-4" /></Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-xs bg-[#0F172A] border-white/5 rounded-2xl">
+                                          <DialogHeader><DialogTitle className="text-white font-black">{item.name} Notes</DialogTitle></DialogHeader>
+                                          <p className="text-sm text-zinc-400 leading-relaxed">{item.notes}</p>
+                                        </DialogContent>
+                                      </Dialog>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
                 {isOrganizer && (
                   <AddItemDialog firestore={firestore} tripId={trip.id} dayNumber={dayNum} />
                 )}
@@ -330,6 +360,7 @@ function ItineraryTab({ firestore, trip, itinerary, isOrganizer, onGoToChecklist
 function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore, tripId: string, dayNumber: number }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('activity');
+  const [timeSlot, setTimeSlot] = useState<string>('Morning');
   const [planned, setPlanned] = useState('');
   const [notes, setNotes] = useState('');
   const [open, setOpen] = useState(false);
@@ -344,6 +375,7 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
     const data: any = {
       name,
       category,
+      timeSlot,
       plannedBudget: Number(planned),
       notes,
       dayNumber
@@ -362,6 +394,7 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
   const reset = () => {
     setName('');
     setCategory('activity');
+    setTimeSlot('Morning');
     setPlanned('');
     setNotes('');
     setMode('train');
@@ -384,7 +417,19 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
             <Label className="text-xs font-black uppercase tracking-widest text-zinc-500">Activity Name</Label>
             <Input className="bg-white/5 border-white/5 h-12 rounded-xl" placeholder="e.g. Dinner at Local Cafe" value={name} onChange={e => setName(e.target.value)} />
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-widest text-zinc-500">Time of Day</Label>
+              <Select value={timeSlot} onValueChange={setTimeSlot}>
+                <SelectTrigger className="bg-white/5 border-white/5 h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#0F172A] border-white/10 text-white">
+                  {TIME_SLOTS.map(slot => (
+                    <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label className="text-xs font-black uppercase tracking-widest text-zinc-500">Category</Label>
               <Select value={category} onValueChange={setCategory}>
@@ -398,11 +443,13 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-black uppercase tracking-widest text-zinc-500">Planned (₹)</Label>
-              <Input type="number" className="bg-white/5 border-white/5 h-12 rounded-xl" placeholder="500" value={planned} onChange={e => setPlanned(e.target.value)} />
-            </div>
           </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-black uppercase tracking-widest text-zinc-500">Planned Budget (₹)</Label>
+            <Input type="number" className="bg-white/5 border-white/5 h-12 rounded-xl" placeholder="500" value={planned} onChange={e => setPlanned(e.target.value)} />
+          </div>
+
           {category === 'travel' && (
             <div className="space-y-4 border-t border-white/5 pt-4">
               <div className="grid grid-cols-2 gap-4">
@@ -737,7 +784,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { fire
   const chartData = categories.map(cat => ({
     name: cat.charAt(0).toUpperCase() + cat.slice(1),
     actual: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0),
-    planned: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0),
+    planned: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0),
   })).filter(d => d.actual > 0 || d.planned > 0);
 
   const pieData = chartData.map((d, i) => ({ name: d.name, value: d.actual }));

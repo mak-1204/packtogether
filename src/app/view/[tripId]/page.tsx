@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
@@ -6,11 +7,14 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Wallet, Plane, Bus, Sparkles, Train, Info } from 'lucide-react';
+import { MapPin, Calendar, Wallet, Plane, Bus, Sparkles, Train, Info, Coffee, Sun, Sunset, Moon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { toDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+
+const TIME_SLOTS = ['Morning', 'Afternoon', 'Evening', 'Night'] as const;
 
 export default function PublicTripViewPage() {
   const { tripId } = useParams() as { tripId: string };
@@ -23,7 +27,7 @@ export default function PublicTripViewPage() {
 
   const itineraryQuery = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
-    return query(collection(firestore, 'trips', tripId, 'itineraryItems'), orderBy('dayNumber'), orderBy('createdAt'));
+    return query(collection(firestore, 'trips', tripId, 'itineraryItems'), orderBy('dayNumber'));
   }, [firestore, tripId]);
 
   const { data: trip, isLoading: isTripLoading } = useDoc(tripRef);
@@ -37,6 +41,16 @@ export default function PublicTripViewPage() {
   
   const days = Array.from(new Set(itinerary?.map((i: any) => i.dayNumber) || [1])).sort((a, b) => (a as number) - (b as number));
 
+  const getSlotIcon = (slot: string) => {
+    switch (slot) {
+      case 'Morning': return <Coffee className="w-3 h-3" />;
+      case 'Afternoon': return <Sun className="w-3 h-3" />;
+      case 'Evening': return <Sunset className="w-3 h-3" />;
+      case 'Night': return <Moon className="w-3 h-3" />;
+      default: return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0F172A] pb-20 text-white selection:bg-[#0D9488] selection:text-white">
       <div className="relative h-[40vh] w-full">
@@ -45,6 +59,7 @@ export default function PublicTripViewPage() {
           alt={trip.destination} 
           fill 
           className="object-cover"
+          data-ai-hint="travel landscape"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/40 to-transparent" />
         <div className="absolute bottom-10 left-0 right-0 text-center px-6">
@@ -86,41 +101,58 @@ export default function PublicTripViewPage() {
             <div className="h-px flex-1 bg-white/5" />
           </div>
           
-          <div className="space-y-10">
+          <div className="space-y-12">
             {days.map(dayNum => {
-              const items = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
+              const dayItems = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
+              const dayDate = addDays(toDate(trip.startDate), (dayNum as number) - 1);
+
               return (
-                <div key={dayNum as number} className="space-y-6">
+                <div key={dayNum as number} className="space-y-8">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-[#0D9488]/10 border border-[#0D9488]/20 flex items-center justify-center text-[#0D9488] font-black shadow-lg">
                       D{dayNum as number}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-black text-white">Day {dayNum as number}</p>
-                      <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Activity Plan</p>
+                      <p className="text-sm font-black text-white">{format(dayDate, 'EEEE, MMM dd')}</p>
+                      <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Day {dayNum as number}</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-4 pl-6 border-l border-white/5 ml-6">
-                    {items.length === 0 ? (
-                      <p className="text-xs text-zinc-500 italic">Rest day or unscheduled activities.</p>
-                    ) : items.map((item: any) => (
-                      <Card key={item.id} className="bg-white/5 border-white/5 rounded-2xl overflow-hidden shadow-md">
-                        <CardContent className="p-4 flex items-start gap-4">
-                          <div className="shrink-0 w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-[#0D9488]">
-                            {item.category === 'transport' ? <Bus className="w-5 h-5" /> :
-                             item.category === 'travel' ? <Train className="w-5 h-5" /> :
-                             item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
-                             item.category === 'stay' ? <MapPin className="w-5 h-5" /> :
-                             <Sparkles className="w-5 h-5" />}
+                  <div className="space-y-10 pl-6 border-l border-white/5 ml-6">
+                    {TIME_SLOTS.map(slot => {
+                      const slotItems = dayItems.filter((i: any) => i.timeSlot === slot || (!i.timeSlot && slot === 'Morning' && dayItems.indexOf(i) === 0));
+                      if (slotItems.length === 0) return null;
+
+                      return (
+                        <div key={slot} className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <div className="text-[#0D9488] opacity-60">
+                              {getSlotIcon(slot)}
+                            </div>
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{slot}</span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm text-white truncate">{item.name}</h4>
-                            <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{item.notes}</p>
+                          <div className="space-y-4">
+                            {slotItems.map((item: any) => (
+                              <Card key={item.id} className="bg-white/5 border-white/5 rounded-2xl overflow-hidden shadow-md">
+                                <CardContent className="p-4 flex items-start gap-4">
+                                  <div className="shrink-0 w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-[#0D9488]">
+                                    {item.category === 'transport' ? <Bus className="w-5 h-5" /> :
+                                     item.category === 'travel' ? <Train className="w-5 h-5" /> :
+                                     item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
+                                     item.category === 'stay' ? <MapPin className="w-5 h-5" /> :
+                                     <Sparkles className="w-5 h-5" />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-sm text-white truncate">{item.name}</h4>
+                                    <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{item.notes}</p>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

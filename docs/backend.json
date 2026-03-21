@@ -112,6 +112,11 @@
         "name": { "type": "string" },
         "category": { "type": "string" },
         "dayNumber": { "type": "number" },
+        "timeSlot": { 
+          "type": "string",
+          "enum": ["Morning", "Afternoon", "Evening", "Night"],
+          "description": "The time of day for this activity."
+        },
         "plannedBudget": { "type": "number" },
         "actualBudget": { "type": "number" },
         "notes": { "type": "string" },
