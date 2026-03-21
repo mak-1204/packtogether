@@ -3,38 +3,47 @@
 import { Compass, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
+import { KENBURNS_SCALE } from '@/lib/slides';
 
 export default function Hero() {
-  const { slides, currentSlide, currentIndex, transitioning, slidesLoading } = useSlideshow();
+  const { slides, currentSlide, currentIndex, transitioning, slidesLoading, zoomProgress } = useSlideshow();
+
+  // Calculate current scale based on RAF-driven progress
+  const ZOOM_SCALE_START = 1.0;
+  const currentScale = ZOOM_SCALE_START + (KENBURNS_SCALE - ZOOM_SCALE_START) * zoomProgress;
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#0F172A]">
       {/* ===== BACKGROUND LAYER — DO NOT MODIFY ANYTHING BELOW THIS LINE ===== */}
       
       {/* All slides rendered simultaneously, only active one is visible */}
-      {slides.map((slide, index) => (
-        <div
-          key={slide.id}
-          className="absolute inset-0"
-          style={{
-            zIndex: index === currentIndex ? 2 : 1,
-            opacity: index === currentIndex ? 1 : 0,
-            transition: "opacity 2000ms ease-in-out",
-          }}
-        >
+      {slides.map((slide, index) => {
+        const isActive = index === currentIndex;
+        return (
           <div
-            className="absolute inset-0 bg-cover bg-center"
+            key={slide.id}
+            className="absolute inset-0 overflow-hidden"
             style={{
-              backgroundImage: `url(${slide.imageUrl})`,
-              transform: index === currentIndex ? "scale(1.08)" : "scale(1.0)",
-              transition: index === currentIndex 
-                ? "transform 6000ms ease-in-out" 
-                : "none",
-              transformOrigin: "center center",
+              zIndex: isActive ? 2 : 1,
+              opacity: isActive ? 1 : 0,
+              transition: "opacity 2000ms ease-in-out",
             }}
-          />
-        </div>
-      ))}
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url(${slide.imageUrl})`,
+                transform: isActive 
+                  ? `scale(${currentScale})` 
+                  : "scale(1.0)",
+                // No transition on transform; requestAnimationFrame handles it directly
+                willChange: "transform",
+                transformOrigin: "center center",
+              }}
+            />
+          </div>
+        );
+      })}
 
       {/* Gradient overlay — smooth fade on all sides, heaviest at bottom */}
       <div

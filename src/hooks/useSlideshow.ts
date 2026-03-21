@@ -3,15 +3,19 @@
  * @fileOverview Custom hook for managing the landing page background slideshow state from Firestore with smooth transitions.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getSlideshowSlides, type SlideshowSlide } from '@/lib/slideshowService';
-import { SLIDE_DURATION } from '@/lib/slides';
+import { SLIDE_DURATION, FADE_DURATION } from '@/lib/slides';
 
 export function useSlideshow() {
   const [slides, setSlides] = useState<SlideshowSlide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [slidesLoading, setSlidesLoading] = useState(true);
+  const [zoomProgress, setZoomProgress] = useState(0);
+  
+  const rafRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   // Fetch slides from Firestore on mount
   useEffect(() => {
@@ -48,7 +52,6 @@ export function useSlideshow() {
       setTransitioning(true);
       
       // Advance the index after a short delay (for the pill fade)
-      // The background CSS transition handles its own crossfade simultaneously
       setTimeout(() => {
         setCurrentIndex(prev => (prev + 1) % slides.length);
         setTransitioning(false); // Pill fades back in for the new slide
@@ -59,11 +62,44 @@ export function useSlideshow() {
     return () => clearInterval(interval);
   }, [slides, slides.length]);
 
+  // JS-driven Ken Burns zoom using requestAnimationFrame
+  useEffect(() => {
+    if (slides.length === 0) return;
+
+    // Cancel any previous animation
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    
+    startTimeRef.current = performance.now();
+    setZoomProgress(0);
+
+    function animate(now: number) {
+      if (startTimeRef.current === null) return;
+      
+      const elapsed = now - startTimeRef.current;
+      // Zoom runs for the full duration of the slide + the fade transition
+      const totalAnimDuration = SLIDE_DURATION + FADE_DURATION;
+      const progress = Math.min(elapsed / totalAnimDuration, 1);
+      
+      setZoomProgress(progress);
+      
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [currentIndex, slides.length]);
+
   return {
     slides,
     currentSlide: slides[currentIndex] || null,
     currentIndex,
     transitioning,
     slidesLoading,
+    zoomProgress,
   };
 }
