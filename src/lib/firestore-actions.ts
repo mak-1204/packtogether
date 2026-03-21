@@ -60,7 +60,6 @@ export async function addItineraryItem(db: Firestore, tripId: string, itemData: 
     updatedAt: serverTimestamp(),
   });
 
-  // If it's a travel category, add default checklist items
   if (itemData.category === 'travel') {
     const checklistRef = collection(db, 'trips', tripId, 'itineraryItems', docRef.id, 'checklistItems');
     const defaults = ['Tickets Downloaded', 'Hotel Confirmation', 'Local Cash Ready', 'Bags Packed'];
@@ -105,6 +104,14 @@ export async function addSuggestion(db: Firestore, tripId: string, suggestion: a
     tripId,
     isAiRecommended: false,
     createdAt: serverTimestamp(),
+  });
+}
+
+export async function markAiRecommended(db: Firestore, tripId: string, suggestionId: string, reason: string) {
+  const suggestionRef = doc(db, 'trips', tripId, 'suggestions', suggestionId);
+  return updateDoc(suggestionRef, {
+    isAiRecommended: true,
+    aiReason: reason
   });
 }
 
