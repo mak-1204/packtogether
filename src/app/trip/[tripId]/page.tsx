@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { doc, collection, query, orderBy, where } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
-import { getMemberSession, updateActualBudget, addItineraryItem, addSuggestion, addPackingItem, togglePackedStatus, deletePackingItem } from '@/lib/firestore-actions';
+import { getMemberSession, updateActualBudget, addItineraryItem, addSuggestion, addPackingItem, togglePackedStatus, deletePackingItem, markTripComplete } from '@/lib/firestore-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,12 +14,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
-  Calendar, ChecklistItem, Lightbulb, Package, PieChart, 
+  Calendar, CheckSquare, Lightbulb, Package, PieChart, 
   Plus, MapPin, ChevronRight, CheckCircle2, Circle, Trash2, 
-  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Car
+  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Car, Share2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { 
   PieChart as RePieChart, Pie, Cell, ResponsiveContainer, 
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend 
@@ -83,7 +83,6 @@ export default function TripDetailsPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Sticky Top Bar */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40 p-4">
         <div className="container max-w-lg mx-auto flex items-center justify-between">
           <div className="flex flex-col">
@@ -120,14 +119,13 @@ export default function TripDetailsPage() {
             <SummaryTab trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
           </TabsContent>
 
-          {/* Bottom Navigation */}
           <TabsList className="fixed bottom-0 left-0 right-0 h-16 bg-background border-t border-border/40 rounded-none grid grid-cols-5 z-50">
             <TabsTrigger value="itinerary" className="flex flex-col gap-1 data-[state=active]:text-primary">
               <Calendar className="w-5 h-5" />
               <span className="text-[10px]">Itinerary</span>
             </TabsTrigger>
             <TabsTrigger value="checklist" className="flex flex-col gap-1 data-[state=active]:text-primary">
-              <ChecklistItem className="w-5 h-5" />
+              <CheckSquare className="w-5 h-5" />
               <span className="text-[10px]">Checklist</span>
             </TabsTrigger>
             <TabsTrigger value="suggestions" className="flex flex-col gap-1 data-[state=active]:text-primary">
@@ -149,11 +147,9 @@ export default function TripDetailsPage() {
   );
 }
 
-// --- TAB COMPONENTS ---
-
 function ItineraryTab({ trip, itinerary, isOrganizer }: any) {
   const { firestore } = useFirestore();
-  const days = Array.from(new Set(itinerary?.map((i: any) => i.dayNumber) || [1])).sort((a, b) => a - b);
+  const days = Array.from(new Set(itinerary?.map((i: any) => i.dayNumber) || [1])).sort((a, b) => (a as number) - (b as number));
 
   return (
     <div className="space-y-6 pb-24">
@@ -163,9 +159,9 @@ function ItineraryTab({ trip, itinerary, isOrganizer }: any) {
         const dayActual = items.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
         
         return (
-          <div key={dayNum} className="space-y-3">
+          <div key={dayNum as number} className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">Day {dayNum}</h2>
+              <h2 className="text-xl font-bold">Day {dayNum as number}</h2>
               <span className="text-xs text-muted-foreground">₹{dayActual} / ₹{dayPlanned}</span>
             </div>
             <div className="space-y-3">
@@ -363,7 +359,7 @@ function PackingTab({ trip, packing, isOrganizer }: any) {
           <div 
             key={i.id} 
             className={cn(
-              "flex items-center justify-between p-4 rounded-xl border border-border/40 transition-all",
+              "flex items-center justify-between p-4 rounded-xl border border-border/40 transition-all cursor-pointer",
               i.isPacked ? "bg-primary/5 opacity-60" : "bg-card/50"
             )}
             onClick={() => togglePackedStatus(firestore!, trip.id, i.id, i.isPacked)}
@@ -403,8 +399,6 @@ function SummaryTab({ trip, itinerary, isOrganizer }: any) {
     actual: itinerary?.filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0,
     planned: itinerary?.filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0,
   })).filter(d => d.actual > 0 || d.planned > 0);
-
-  const COLORS = ['#0D9488', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6'];
 
   return (
     <div className="space-y-8 pb-24">
@@ -465,3 +459,5 @@ function SummaryTab({ trip, itinerary, isOrganizer }: any) {
     </div>
   );
 }
+
+import { Users } from 'lucide-react';
