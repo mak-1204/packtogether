@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { createTrip } from '@/lib/firestore-actions';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +39,12 @@ function CreateTripContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTripId, setCreatedTripId] = useState<string | null>(null);
 
-  // Handle template pre-filling
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/auth');
+    }
+  }, [user, isUserLoading, router]);
+
   useEffect(() => {
     if (templateId && firestore) {
       const fetchTemplate = async () => {
@@ -57,12 +62,6 @@ function CreateTripContent() {
       fetchTemplate();
     }
   }, [templateId, firestore]);
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/');
-    }
-  }, [user, isUserLoading, router]);
 
   if (isUserLoading || !user) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]"><Loader2 className="animate-spin" /></div>;
 

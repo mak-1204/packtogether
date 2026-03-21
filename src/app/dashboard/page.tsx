@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +20,21 @@ export default function DashboardPage() {
   const { firestore } = useFirestore();
   const auth = useAuth();
   const router = useRouter();
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/');
+      router.push('/auth');
     }
   }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (user && firestore) {
+      getDoc(doc(firestore, 'users', user.uid)).then(snap => {
+        if (snap.exists()) setUserProfile(snap.data());
+      });
+    }
+  }, [user, firestore]);
 
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -74,6 +83,8 @@ export default function DashboardPage() {
     }
   };
 
+  const displayName = userProfile?.firstName || user.displayName || 'Traveler';
+
   return (
     <div className="min-h-screen bg-[#0F172A] text-white pb-24 selection:bg-[#0D9488] selection:text-white">
       {/* Top Bar */}
@@ -86,12 +97,12 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end mr-1">
               <span className="text-xs font-bold text-zinc-400">Voyager</span>
-              <span className="text-sm font-medium">{user.displayName || 'Traveler'}</span>
+              <span className="text-sm font-medium">{displayName}</span>
             </div>
             <Avatar className="h-9 w-9 border border-white/10">
               <AvatarImage src={user.photoURL || ''} />
               <AvatarFallback className="bg-[#0D9488] text-white">
-                {user.displayName?.[0] || user.email?.[0] || 'T'}
+                {displayName[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-400 hover:text-white">
@@ -104,7 +115,7 @@ export default function DashboardPage() {
       <main className="container max-w-7xl mx-auto px-4 py-10">
         <div className="mb-10">
           <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight">
-            Hey {user.displayName?.split(' ')[0] || 'Traveler'} 👋
+            Hey {displayName.split(' ')[0]} 👋
           </h1>
           <p className="text-zinc-400 text-lg">Ready for the next one?</p>
         </div>

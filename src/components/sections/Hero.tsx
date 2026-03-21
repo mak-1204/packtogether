@@ -4,6 +4,7 @@ import { Compass, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
 import { KENBURNS_SCALE } from '@/lib/slides';
+import Link from 'next/link';
 
 export default function Hero() {
   const { slides, currentSlide, currentIndex, transitioning, slidesLoading, zoomProgress } = useSlideshow();
@@ -14,9 +15,7 @@ export default function Hero() {
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#0F172A]">
-      {/* ===== BACKGROUND LAYER — DO NOT MODIFY ANYTHING BELOW THIS LINE ===== */}
-      
-      {/* All slides rendered simultaneously, only active one is visible */}
+      {/* ===== BACKGROUND LAYER ===== */}
       {slides.map((slide, index) => {
         const isActive = index === currentIndex;
         return (
@@ -36,7 +35,6 @@ export default function Hero() {
                 transform: isActive 
                   ? `scale(${currentScale})` 
                   : "scale(1.0)",
-                // No transition on transform; requestAnimationFrame handles it directly
                 willChange: "transform",
                 transformOrigin: "center center",
               }}
@@ -45,7 +43,6 @@ export default function Hero() {
         );
       })}
 
-      {/* Gradient overlay — precisely tuned to match reference image mood */}
       <div
         className="absolute inset-0"
         style={{
@@ -63,14 +60,12 @@ export default function Hero() {
         }}
       />
 
-      {/* ===== END BACKGROUND LAYER ===== */}
-
       {/* Header / Logo */}
       <header className="absolute top-0 left-0 p-8 z-[4]">
-        <div className="flex items-center gap-2 group cursor-pointer">
-          <Compass className="w-8 h-8 text-primary transition-transform group-hover:rotate-45 duration-500" />
+        <Link href="/" className="flex items-center gap-2 group cursor-pointer">
+          <Compass className="w-8 h-8 text-[#0D9488] transition-transform group-hover:rotate-45 duration-500" />
           <span className="text-2xl font-bold tracking-tight text-white font-headline">PackTogether</span>
-        </div>
+        </Link>
       </header>
 
       {/* Main Content */}
@@ -82,16 +77,19 @@ export default function Hero() {
           Stop planning trips on WhatsApp. PackTogether gives your friend group one place to plan, decide, and track — together.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 h-14 rounded-full font-medium">
-            Create a Trip
-          </Button>
-          <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8 h-14 rounded-full font-medium">
-            Join a Trip
-          </Button>
+          <Link href="/create-trip">
+            <Button size="lg" className="bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg px-8 h-14 rounded-full font-bold w-full sm:w-auto">
+              Create a Trip
+            </Button>
+          </Link>
+          <Link href="/dashboard">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8 h-14 rounded-full font-bold w-full sm:w-auto">
+              My Trips
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Location pill — precisely styled to match reference image */}
       {!slidesLoading && currentSlide && (
         <div
           className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[4] flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm font-medium text-white/90 border border-white/5 backdrop-blur-xl shadow-2xl"
@@ -101,7 +99,7 @@ export default function Hero() {
             transition: "opacity 600ms ease-in-out"
           }}
         >
-          <MapPin className="w-4 h-4 text-primary/70" />
+          <MapPin className="w-4 h-4 text-[#0D9488]/70" />
           <span className="tracking-wide">{currentSlide.location}</span>
         </div>
       )}
