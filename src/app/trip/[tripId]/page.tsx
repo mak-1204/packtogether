@@ -49,7 +49,7 @@ import {
 import { 
   Calendar as CalendarIcon, CheckSquare, Lightbulb, Package, PieChart, 
   Plus, MapPin, CheckCircle2, Circle, Trash2, 
-  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Share2, Info, ArrowRight, Loader2
+  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Info, ArrowRight, Loader2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -77,7 +77,6 @@ export default function TripDetailsPage() {
   const itineraryQuery = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
     try {
-      // Simplified query to avoid needing composite indexes for now
       return query(collection(firestore, 'trips', tripId, 'itineraryItems'), orderBy('dayNumber'));
     } catch (e) {
       return null;
@@ -340,7 +339,7 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
   const [to, setTo] = useState('');
   const [time, setTime] = useState('');
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     if (!name || !planned) return;
     const data: any = {
       name,
@@ -355,7 +354,7 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
       data.toLocation = to;
       data.departureTime = time;
     }
-    await addItineraryItem(firestore, tripId, data);
+    addItineraryItem(firestore, tripId, data);
     setOpen(false);
     reset();
   };
@@ -501,12 +500,12 @@ function LegChecklistCard({ firestore, leg, tripId, isOrganizer, onUrgentChange 
     }
   }, [checks, onUrgentChange]);
 
-  const cycleStatus = async (check: any) => {
+  const cycleStatus = (check: any) => {
     if (!isOrganizer) return;
     const order = ['red', 'yellow', 'green'];
     const currentIndex = order.indexOf(check.status);
     const nextStatus = order[(currentIndex + 1) % order.length];
-    await updateChecklistItemStatus(firestore, tripId, leg.id, check.id, nextStatus);
+    updateChecklistItemStatus(firestore, tripId, leg.id, check.id, nextStatus);
   };
 
   return (
@@ -565,9 +564,9 @@ function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: { firesto
   const [notes, setNotes] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     if (!link) return;
-    await addSuggestion(firestore, trip.id, {
+    addSuggestion(firestore, trip.id, {
       link,
       notes,
       addedBy: user?.displayName || user?.email?.split('@')[0] || 'Member'
@@ -594,7 +593,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: { firesto
       });
       
       const winningSuggestion = suggestions[result.recommendedSuggestionIndex];
-      await markAiRecommended(firestore, trip.id, winningSuggestion.id, result.aiReason);
+      markAiRecommended(firestore, trip.id, winningSuggestion.id, result.aiReason);
       toast({ title: 'AI Picked!', description: `The AI recommends: ${winningSuggestion.notes || winningSuggestion.link}` });
     } catch (error) {
       toast({ variant: 'destructive', title: 'AI Error', description: 'Could not get recommendation.' });
@@ -674,9 +673,9 @@ function PackingTab({ firestore, trip, packing, isOrganizer }: { firestore: Fire
   const totalItems = packing?.length || 0;
   const progress = totalItems > 0 ? (packedCount / totalItems) * 100 : 0;
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     if (!item) return;
-    await addPackingItem(firestore, trip.id, { name: item });
+    addPackingItem(firestore, trip.id, { name: item });
     setItem('');
   };
 
@@ -738,7 +737,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { fire
   const chartData = categories.map(cat => ({
     name: cat.charAt(0).toUpperCase() + cat.slice(1),
     actual: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0),
-    planned: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0),
+    planned: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0),
   })).filter(d => d.actual > 0 || d.planned > 0);
 
   const pieData = chartData.map((d, i) => ({ name: d.name, value: d.actual }));
@@ -822,8 +821,8 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { fire
         {isOrganizer && trip.status !== 'Completed' && (
           <Button 
             className="w-full h-16 rounded-[1.5rem] bg-teal-500 hover:bg-teal-600 font-black text-lg shadow-xl shadow-teal-500/20"
-            onClick={async () => {
-              await markTripComplete(firestore, trip.id);
+            onClick={() => {
+              markTripComplete(firestore, trip.id);
               toast({ title: 'Trip Completed! 🏁', description: 'Hope you had a blast.' });
               router.push('/dashboard');
             }}

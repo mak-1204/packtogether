@@ -15,7 +15,7 @@ import { CalendarIcon, Copy, Share2, ArrowRight, Compass, CheckCircle2, Loader2,
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection } from 'firebase/firestore';
 
 const VIBES = [
   { id: 'Budget', icon: '🏕️', label: 'Budget' },
@@ -39,14 +39,12 @@ function CreateTripContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTripId, setCreatedTripId] = useState<string | null>(null);
 
-  // Guard — Redirect only after we are sure the user isn't logged in
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/auth');
     }
   }, [user, isUserLoading, router]);
 
-  // Load template data if available
   useEffect(() => {
     if (templateId && firestore) {
       const fetchTemplate = async () => {
@@ -65,7 +63,6 @@ function CreateTripContent() {
     }
   }, [templateId, firestore]);
 
-  // Handle loading state
   if (isUserLoading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]">
@@ -74,20 +71,17 @@ function CreateTripContent() {
     );
   }
 
-  // Prevent rendering if confirmed not logged in
   if (!user) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Secondary Guard — Auth check during submit
     if (!user?.uid || !firestore) {
       toast({ 
         variant: 'destructive', 
         title: 'Session Error', 
-        description: 'Your session has expired. Please sign in again.' 
+        description: 'You must be logged in to create a trip.' 
       });
-      router.push('/auth');
       return;
     }
 
@@ -101,29 +95,24 @@ function CreateTripContent() {
     }
 
     setIsSubmitting(true);
-    try {
-      const tripData = {
-        name,
-        destination,
-        startDate,
-        endDate,
-        budgetPerHead: Number(budget),
-        vibe,
-        coverImageUrl: `https://picsum.photos/seed/${destination}/1920/1080`
-      };
+    
+    // Generate the ID client-side for immediate navigation/optimism
+    const tripId = doc(collection(firestore, 'trips')).id;
+    
+    const tripData = {
+      name,
+      destination,
+      startDate,
+      endDate,
+      budgetPerHead: Number(budget),
+      vibe,
+      coverImageUrl: `https://picsum.photos/seed/${destination}/1920/1080`
+    };
 
-      const tripId = await createTrip(firestore, tripData, user.uid);
-      setCreatedTripId(tripId);
-      toast({ title: 'Trip Created!', description: 'Your adventure starts now.' });
-    } catch (error: any) {
-      toast({ 
-        variant: 'destructive', 
-        title: 'Creation Failed', 
-        description: error.message || 'Could not create trip. Please try again.' 
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    createTrip(firestore, tripData, user.uid, tripId);
+    setCreatedTripId(tripId);
+    toast({ title: 'Trip Created!', description: 'Your adventure starts now.' });
+    setIsSubmitting(false);
   };
 
   const shareLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${createdTripId}`;

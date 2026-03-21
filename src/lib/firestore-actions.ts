@@ -3,7 +3,6 @@
 import { 
   collection, 
   doc, 
-  addDoc, 
   setDoc, 
   updateDoc, 
   deleteDoc, 
@@ -13,164 +12,261 @@ import {
   getDoc,
   serverTimestamp,
   Firestore,
-  orderBy,
   Timestamp
 } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
-export async function createTrip(db: Firestore, tripData: any, userId: string) {
-  try {
-    console.log("Creating trip with data:", tripData, "userId:", userId);
-    
-    const tripRef = collection(db, 'trips');
-    const docRef = await addDoc(tripRef, {
-      ...tripData,
-      // Ensure dates are stored as Firestore Timestamps
-      startDate: tripData.startDate instanceof Date 
-        ? Timestamp.fromDate(tripData.startDate) 
-        : tripData.startDate,
-      endDate: tripData.endDate instanceof Date 
-        ? Timestamp.fromDate(tripData.endDate) 
-        : tripData.endDate,
-      organizerId: userId,
-      members: { [userId]: 'organizer' },
-      status: 'Planning',
-      totalPlannedBudget: 0,
-      totalActualBudget: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    
-    console.log("Trip created successfully with ID:", docRef.id);
-    return docRef.id;
-  } catch (error: any) {
-    console.error("createTrip error — code:", error.code, "message:", error.message);
-    throw error;
-  }
-}
-
-export async function deleteTrip(db: Firestore, tripId: string) {
+/**
+ * Creates a new trip with a pre-generated ID for optimistic navigation.
+ */
+export function createTrip(db: Firestore, tripData: any, userId: string, tripId: string) {
   const tripRef = doc(db, 'trips', tripId);
-  return deleteDoc(tripRef);
+  const data = {
+    ...tripData,
+    startDate: tripData.startDate instanceof Date 
+      ? Timestamp.fromDate(tripData.startDate) 
+      : tripData.startDate,
+    endDate: tripData.endDate instanceof Date 
+      ? Timestamp.fromDate(tripData.endDate) 
+      : tripData.endDate,
+    organizerId: userId,
+    members: { [userId]: 'organizer' },
+    status: 'Planning',
+    totalPlannedBudget: 0,
+    totalActualBudget: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  setDoc(tripRef, data).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: tripRef.path,
+      operation: 'create',
+      requestResourceData: data,
+    } satisfies SecurityRuleContext));
+  });
+
+  return tripId;
 }
 
+export function deleteTrip(db: Firestore, tripId: string) {
+  const tripRef = doc(db, 'trips', tripId);
+  deleteDoc(tripRef).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: tripRef.path,
+      operation: 'delete',
+    } satisfies SecurityRuleContext));
+  });
+}
+
+/**
+ * Joining requires a read check first, so it remains partially async.
+ */
 export async function joinTrip(db: Firestore, tripId: string, memberData: { name: string, email: string, uid: string, photoURL?: string | null }) {
-  const membersRef = collection(db, 'trips', tripId, 'members');
   const memberId = memberData.uid;
+  const memberDocRef = doc(db, 'trips', tripId, 'members', memberId);
   
-  // Check if member already exists in subcollection to avoid duplicates
-  const memberDocRef = doc(membersRef, memberId);
   const memberSnap = await getDoc(memberDocRef);
   
   if (!memberSnap.exists()) {
-    await setDoc(memberDocRef, {
+    const data = {
       ...memberData,
       tripId,
       role: 'member',
       joinedAt: serverTimestamp(),
+    };
+
+    setDoc(memberDocRef, data).catch(async (error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: memberDocRef.path,
+        operation: 'create',
+        requestResourceData: data,
+      } satisfies SecurityRuleContext));
     });
 
     const tripRef = doc(db, 'trips', tripId);
-    await updateDoc(tripRef, {
+    updateDoc(tripRef, {
       [`members.${memberId}`]: 'member'
+    }).catch(async (error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: tripRef.path,
+        operation: 'update',
+        requestResourceData: { [`members.${memberId}`]: 'member' },
+      } satisfies SecurityRuleContext));
     });
   }
   
   return memberId;
 }
 
-export async function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
-  const itemsRef = collection(db, 'trips', tripId, 'itineraryItems');
-  const docRef = await addDoc(itemsRef, {
+export function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
+  const itemRef = doc(collection(db, 'trips', tripId, 'itineraryItems'));
+  const data = {
     ...itemData,
     tripId,
     actualBudget: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+  };
+
+  setDoc(itemRef, data).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: itemRef.path,
+      operation: 'create',
+      requestResourceData: data,
+    } satisfies SecurityRuleContext));
   });
 
   if (itemData.category === 'travel') {
-    const checklistRef = collection(db, 'trips', tripId, 'itineraryItems', docRef.id, 'checklistItems');
+    const checklistRef = collection(db, 'trips', tripId, 'itineraryItems', itemRef.id, 'checklistItems');
     const defaults = ['Tickets Downloaded', 'Hotel Confirmation', 'Local Cash Ready', 'Bags Packed'];
-    for (let i = 0; i < defaults.length; i++) {
-      await addDoc(checklistRef, {
-        description: defaults[i],
+    
+    defaults.forEach((description, index) => {
+      const checkDocRef = doc(checklistRef);
+      const checkData = {
+        description,
         status: 'red',
-        order: i,
+        order: index,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+      };
+      setDoc(checkDocRef, checkData).catch(async (error) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: checkDocRef.path,
+          operation: 'create',
+          requestResourceData: checkData,
+        } satisfies SecurityRuleContext));
       });
-    }
+    });
   }
-  return docRef.id;
+  
+  return itemRef.id;
 }
 
-export async function updateActualBudget(db: Firestore, tripId: string, itemId: string, amount: number) {
+export function updateActualBudget(db: Firestore, tripId: string, itemId: string, amount: number) {
   const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
-  return updateDoc(itemRef, {
+  updateDoc(itemRef, {
     actualBudget: amount,
     updatedAt: serverTimestamp(),
+  }).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: itemRef.path,
+      operation: 'update',
+      requestResourceData: { actualBudget: amount },
+    } satisfies SecurityRuleContext));
   });
 }
 
-export async function deleteItineraryItem(db: Firestore, tripId: string, itemId: string) {
+export function deleteItineraryItem(db: Firestore, tripId: string, itemId: string) {
   const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
-  return deleteDoc(itemRef);
+  deleteDoc(itemRef).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: itemRef.path,
+      operation: 'delete',
+    } satisfies SecurityRuleContext));
+  });
 }
 
-export async function updateChecklistItemStatus(db: Firestore, tripId: string, itemId: string, checklistId: string, newStatus: string) {
+export function updateChecklistItemStatus(db: Firestore, tripId: string, itemId: string, checklistId: string, newStatus: string) {
   const checkRef = doc(db, 'trips', tripId, 'itineraryItems', itemId, 'checklistItems', checklistId);
-  return updateDoc(checkRef, {
+  updateDoc(checkRef, {
     status: newStatus,
     updatedAt: serverTimestamp(),
+  }).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: checkRef.path,
+      operation: 'update',
+      requestResourceData: { status: newStatus },
+    } satisfies SecurityRuleContext));
   });
 }
 
-export async function addSuggestion(db: Firestore, tripId: string, suggestion: any) {
-  const suggestionsRef = collection(db, 'trips', tripId, 'suggestions');
-  return addDoc(suggestionsRef, {
+export function addSuggestion(db: Firestore, tripId: string, suggestion: any) {
+  const suggestionRef = doc(collection(db, 'trips', tripId, 'suggestions'));
+  const data = {
     ...suggestion,
     tripId,
     isAiRecommended: false,
     createdAt: serverTimestamp(),
+  };
+  
+  setDoc(suggestionRef, data).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: suggestionRef.path,
+      operation: 'create',
+      requestResourceData: data,
+    } satisfies SecurityRuleContext));
   });
 }
 
-export async function markAiRecommended(db: Firestore, tripId: string, suggestionId: string, reason: string) {
+export function markAiRecommended(db: Firestore, tripId: string, suggestionId: string, reason: string) {
   const suggestionRef = doc(db, 'trips', tripId, 'suggestions', suggestionId);
-  return updateDoc(suggestionRef, {
+  updateDoc(suggestionRef, {
     isAiRecommended: true,
     aiReason: reason
+  }).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: suggestionRef.path,
+      operation: 'update',
+      requestResourceData: { isAiRecommended: true, aiReason: reason },
+    } satisfies SecurityRuleContext));
   });
 }
 
-export async function addPackingItem(db: Firestore, tripId: string, item: any) {
-  const packingRef = collection(db, 'trips', tripId, 'packingItems');
-  return addDoc(packingRef, {
+export function addPackingItem(db: Firestore, tripId: string, item: any) {
+  const packingRef = doc(collection(db, 'trips', tripId, 'packingItems'));
+  const data = {
     ...item,
     tripId,
     isPacked: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+  };
+  
+  setDoc(packingRef, data).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: packingRef.path,
+      operation: 'create',
+      requestResourceData: data,
+    } satisfies SecurityRuleContext));
   });
 }
 
-export async function togglePackedStatus(db: Firestore, tripId: string, itemId: string, currentStatus: boolean) {
+export function togglePackedStatus(db: Firestore, tripId: string, itemId: string, currentStatus: boolean) {
   const itemRef = doc(db, 'trips', tripId, 'packingItems', itemId);
-  return updateDoc(itemRef, {
+  updateDoc(itemRef, {
     isPacked: !currentStatus,
     updatedAt: serverTimestamp(),
+  }).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: itemRef.path,
+      operation: 'update',
+      requestResourceData: { isPacked: !currentStatus },
+    } satisfies SecurityRuleContext));
   });
 }
 
-export async function deletePackingItem(db: Firestore, tripId: string, itemId: string) {
+export function deletePackingItem(db: Firestore, tripId: string, itemId: string) {
   const itemRef = doc(db, 'trips', tripId, 'packingItems', itemId);
-  return deleteDoc(itemRef);
+  deleteDoc(itemRef).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: itemRef.path,
+      operation: 'delete',
+    } satisfies SecurityRuleContext));
+  });
 }
 
-export async function markTripComplete(db: Firestore, tripId: string) {
+export function markTripComplete(db: Firestore, tripId: string) {
   const tripRef = doc(db, 'trips', tripId);
-  return updateDoc(tripRef, {
+  updateDoc(tripRef, {
     status: 'Completed',
     updatedAt: serverTimestamp(),
+  }).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: tripRef.path,
+      operation: 'update',
+      requestResourceData: { status: 'Completed' },
+    } satisfies SecurityRuleContext));
   });
 }
