@@ -4,169 +4,69 @@ service cloud.firestore {
 
     /**
      * PACKTOGETHER SECURITY RULES
-     *
-     * PHILOSOPHY:
-     * This ruleset implements a robust "Collaborative Access" model. It prioritizes 
-     * Authorization Independence by relying on denormalized membership data within 
-     * documents to ensure fast, secure, and scalable access control without 
-     * recursive document lookups (get() calls).
-     *
-     * DATA STRUCTURE:
-     * 1. /users/{userId}/profile: Private personal data, strictly owner-only.
-     * 2. /trips/{tripId}: The core collaborative entity. Shared access is managed 
-     *    via a denormalized 'members' map (UID to role) and an 'organizerId' field.
-     * 3. /trips/{tripId}/...: All trip-related subcollections (itinerary, packing, 
-     *    suggestions) inherit access by mirroring the 'members' map and 'organizerId'.
-     * 4. /public_trip_summaries/{tripId}: Read-only public views for non-authenticated users.
-     *
-     * KEY SECURITY DECISIONS:
-     * - QAPs (Query Authorization Patterns): Listing operations on trips and sub-items 
-     *   require that the authenticated user's UID is present in the document's 'members' 
-     *   map or matches the 'organizerId'.
-     * - Role-Based Writes: While all members can contribute suggestions or update 
-     *   budgets, destructive actions (deletes) and structural changes are restricted 
-     *   to the trip organizer.
-     * - Structural Segregation: Public read-only data is moved to a top-level 
-     *   collection to ensure no accidental exposure of private collaborator details.
      */
 
-    // --- GLOBAL HELPER FUNCTIONS ---
-
-    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's UID matches the provided ID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the user is the designated organizer of the trip. */
     function isOrganizer(data) {
       return isSignedIn() && data.organizerId == request.auth.uid;
     }
 
-    /** @description Checks if the user is either the organizer or a member of the trip. */
     function isMember(data) {
       return isSignedIn() && (data.organizerId == request.auth.uid || data.members[request.auth.uid] != null);
     }
 
-    /** @description Verifies existence and organizer status for updates/deletes. */
-    function isExistingOrganizer(data) {
-      return resource != null && isOrganizer(data);
+    /** @description Slideshow for landing page. */
+    match /slideshow/{slideId} {
+      allow read: if true;
+      allow write: if false;
     }
 
-    /** @description Verifies existence and membership status for updates/deletes. */
-    function isExistingMember(data) {
-      return resource != null && isMember(data);
-    }
-
-    // --- COLLECTION RULES ---
-
-    /**
-     * @description Private user profiles.
-     * @path /users/{userId}/profile
-     * @allow (get) request.auth.uid == userId
-     * @deny (list) if request.auth.uid != userId
-     * @principle Path-based ownership for personal data.
-     */
     match /users/{userId}/profile {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
     }
 
-    /**
-     * @description Collaborative trip documents.
-     * @path /trips/{tripId}
-     * @allow (list) query where members[uid] != null
-     * @deny (create) if organizerId != request.auth.uid
-     * @principle Shared access via denormalized membership map.
-     */
     match /trips/{tripId} {
-      allow get, list: if isMember(resource.data);
-      allow create: if isSignedIn() && request.resource.data.organizerId == request.auth.uid;
-      allow update: if isExistingMember(resource.data);
-      allow delete: if isExistingOrganizer(resource.data);
+      allow get: if true; // Allow public view for /join and /view
+      allow list: if isSignedIn() && (resource.data.organizerId == request.auth.uid || resource.data.members[request.auth.uid] != null);
+      allow create: if isSignedIn();
+      allow update: if isMember(resource.data);
+      allow delete: if isOrganizer(resource.data);
 
-      /**
-       * @description Participants within a trip.
-       * @path /trips/{tripId}/members/{memberId}
-       * @allow (create) any authenticated user joining a trip
-       * @principle Permits organic growth of trip membership via shared links.
-       */
       match /members/{memberId} {
-        allow get, list: if isMember(resource.data);
-        allow create: if isSignedIn();
-        allow update, delete: if isExistingOrganizer(resource.data);
+        allow get, list: if true;
+        allow create: if true; // Anyone can join via link
+        allow update, delete: if isSignedIn();
       }
 
-      /**
-       * @description Itinerary items for a trip.
-       * @path /trips/{tripId}/itineraryItems/{itemId}
-       * @allow (update) members updating actual budget amounts
-       * @principle Collaborative editing for trip execution.
-       */
       match /itineraryItems/{itemId} {
-        allow get, list: if isMember(resource.data);
-        allow create: if isOrganizer(request.resource.data);
-        allow update: if isExistingMember(resource.data);
-        allow delete: if isExistingOrganizer(resource.data);
-
-        /**
-         * @description Nested checklist items for travel legs.
-         * @path /trips/{tripId}/itineraryItems/{itemId}/checklistItems/{checklistItemId}
-         * @allow (update) members checking off items
-         * @principle Granular task management within itinerary sub-states.
-         */
-        match /checklistItems/{checklistItemId} {
-          allow get, list: if isMember(resource.data);
-          allow create: if isOrganizer(request.resource.data);
-          allow update: if isExistingMember(resource.data);
-          allow delete: if isExistingOrganizer(resource.data);
-        }
+        allow get, list: if true;
+        allow create, update, delete: if true; // Collaborative
       }
 
-      /**
-       * @description Community suggestions for trip planning.
-       * @path /trips/{tripId}/suggestions/{suggestionId}
-       * @allow (create) any member adding a suggestion
-       * @principle Member-driven content creation.
-       */
       match /suggestions/{suggestionId} {
-        allow get, list: if isMember(resource.data);
-        allow create: if isMember(request.resource.data);
-        allow update: if isExistingMember(resource.data);
-        allow delete: if isExistingOrganizer(resource.data);
+        allow get, list: if true;
+        allow create, update, delete: if true;
       }
 
-      /**
-       * @description Packing list management.
-       * @path /trips/{tripId}/packingItems/{packingItemId}
-       * @allow (update) member toggling 'isPacked'
-       * @principle Shared responsibility tracking.
-       */
       match /packingItems/{packingItemId} {
-        allow get, list: if isMember(resource.data);
-        allow create: if isMember(request.resource.data);
-        allow update: if isExistingMember(resource.data);
-        allow delete: if isExistingOrganizer(resource.data);
+        allow get, list: if true;
+        allow create, update, delete: if true;
       }
     }
 
-    /**
-     * @description Public-facing read-only trip summaries.
-     * @path /public_trip_summaries/{tripId}
-     * @allow (get) true (Publicly accessible)
-     * @deny (write) false (Managed by backend triggers)
-     * @principle Structural segregation of public vs private data.
-     */
     match /public_trip_summaries/{tripId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
-
   }
 }
