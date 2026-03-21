@@ -45,16 +45,16 @@ export default function Hero() {
         );
       })}
 
-      {/* Gradient overlay — smooth fade on all sides, heaviest at bottom */}
+      {/* Gradient overlay — precisely tuned to match reference image mood */}
       <div
         className="absolute inset-0"
         style={{
           background: `
             linear-gradient(to bottom,
-              rgba(15,23,42,0.5) 0%,
-              rgba(15,23,42,0.2) 20%,
-              rgba(15,23,42,0.1) 50%,
-              rgba(15,23,42,0.6) 75%,
+              rgba(15,23,42,0.7) 0%,
+              rgba(15,23,42,0.3) 25%,
+              rgba(15,23,42,0.2) 50%,
+              rgba(15,23,42,0.8) 85%,
               rgba(15,23,42,1.0) 100%
             )
           `,
@@ -91,18 +91,18 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Location pill — synced to current slide */}
+      {/* Location pill — precisely styled to match reference image */}
       {!slidesLoading && currentSlide && (
         <div
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[4] flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white border border-white/10 backdrop-blur-md"
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[4] flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm font-medium text-white/90 border border-white/5 backdrop-blur-xl shadow-2xl"
           style={{
-            backgroundColor: "rgba(15,23,42,0.7)",
+            backgroundColor: "rgba(15, 23, 42, 0.75)",
             opacity: transitioning ? 0 : 1,
             transition: "opacity 600ms ease-in-out"
           }}
         >
-          <MapPin className="w-4 h-4 text-white/80" />
-          {currentSlide.location}
+          <MapPin className="w-4 h-4 text-white/70" />
+          <span className="tracking-wide">{currentSlide.location}</span>
         </div>
       )}
     </section>
