@@ -20,7 +20,7 @@ export default function Footer() {
         </p>
 
         <div className="mt-12 text-[10px] text-muted-foreground/30 uppercase tracking-[0.2em]">
-          Designed & Built by Mak
+          Designed & Built with love by Mak
         </div>
 
         <div className="mt-4 text-xs text-muted-foreground/40">
