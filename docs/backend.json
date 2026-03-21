@@ -63,8 +63,7 @@
         },
         "vibe": {
           "type": "string",
-          "description": "The overall style or nature of the trip (e.g., Budget, Mid-Range, Luxury).",
-          "format": "enum"
+          "description": "The overall style or nature of the trip (e.g., Budget, Mid-Range, Luxury)."
         },
         "organizerId": {
           "type": "string",
@@ -72,12 +71,16 @@
         },
         "status": {
           "type": "string",
-          "description": "The current planning status of the trip (e.g., Planning, Ongoing, Completed).",
-          "format": "enum"
+          "description": "The current planning status of the trip (e.g., Planning, Ongoing, Completed)."
         },
         "coverImageUrl": {
           "type": "string",
           "description": "URL for a cover image representing the trip's destination."
+        },
+        "members": {
+          "type": "object",
+          "description": "A map of user IDs to their roles in the trip.",
+          "additionalProperties": { "type": "string" }
         },
         "totalPlannedBudget": {
           "type": "number",
@@ -89,30 +92,34 @@
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp when the trip record was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp when the trip record was last updated.",
           "format": "date-time"
         }
       },
       "required": [
-        "id",
         "name",
         "destination",
-        "startDate",
-        "endDate",
-        "budgetPerHead",
-        "vibe",
-        "organizerId",
-        "status",
-        "coverImageUrl",
-        "totalPlannedBudget",
-        "totalActualBudget",
-        "createdAt"
+        "organizerId"
       ]
+    },
+    "ItineraryItem": {
+      "title": "ItineraryItem",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "dayNumber": { "type": "number" },
+        "plannedBudget": { "type": "number" },
+        "actualBudget": { "type": "number" },
+        "notes": { "type": "string" },
+        "mode": { "type": "string" },
+        "fromLocation": { "type": "string" },
+        "toLocation": { "type": "string" },
+        "departureTime": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -127,16 +134,24 @@
         "path": "/users/{userId}",
         "definition": {
           "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores individual user profile data.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the authenticated user."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/UserProfile" },
+          "description": "Stores individual user profile data."
+        }
+      },
+      {
+        "path": "/trips/{tripId}",
+        "definition": {
+          "entityName": "Trip",
+          "schema": { "$ref": "#/backend/entities/Trip" },
+          "description": "Core trip data."
+        }
+      },
+      {
+        "path": "/trips/{tripId}/itineraryItems/{itemId}",
+        "definition": {
+          "entityName": "ItineraryItem",
+          "schema": { "$ref": "#/backend/entities/ItineraryItem" },
+          "description": "Individual activities or travel legs for a trip."
         }
       }
     ]

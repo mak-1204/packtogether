@@ -5,6 +5,7 @@ service cloud.firestore {
 
     /**
      * PACKTOGETHER SECURITY RULES
+     * Updated to handle collection-level listing permissions correctly.
      */
 
     function isSignedIn() {
@@ -12,7 +13,6 @@ service cloud.firestore {
     }
 
     // Helper to check if user is the organizer or a member of a trip
-    // tripData is the data of the trip document
     function isMember(tripData) {
       return isSignedIn() && (
         tripData.organizerId == request.auth.uid || 
@@ -38,26 +38,28 @@ service cloud.firestore {
 
     /** @description Trip records and subcollections. */
     match /trips/{tripId} {
-      // Anyone can 'get' a trip for public viewing/joining via link
+      // Allow anyone to read a specific trip (for public sharing links)
       allow get: if true;
       
-      // Listing trips (e.g., on the dashboard) is restricted to members/organizers
+      // Allow signed-in users to list trips (for the dashboard)
+      // Note: This applies to the collection list operation
       allow list: if isSignedIn();
       
       allow create: if isSignedIn();
       allow update: if isMember(resource.data);
       allow delete: if isOrganizer(resource.data);
 
-      // Members subcollection - public list to see who is on the trip
+      // Subcollections - We explicitly allow read (get/list) for public sharing
+      
       match /members/{memberId} {
         allow read: if true;
         allow create: if true;    // Anyone can join via link
         allow update, delete: if isSignedIn();
       }
 
-      // Itinerary subcollection - public read for "Shareable Link" viewing
       match /itineraryItems/{itemId} {
-        allow read: if true;
+        // 'read' allows both 'get' (single doc) and 'list' (collection query)
+        allow read: if true; 
         allow write: if isSignedIn(); 
         
         match /checklistItems/{checklistItemId} {
@@ -66,13 +68,11 @@ service cloud.firestore {
         }
       }
 
-      // Suggestions subcollection - public read for "Shareable Link" viewing
       match /suggestions/{suggestionId} {
         allow read: if true;
         allow write: if isSignedIn();
       }
 
-      // Packing subcollection - public read for "Shareable Link" viewing
       match /packingItems/{packingItemId} {
         allow read: if true;
         allow write: if isSignedIn();
