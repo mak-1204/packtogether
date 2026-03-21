@@ -3,7 +3,6 @@
 import { Compass, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
-import { cn } from '@/lib/utils';
 
 export default function Hero() {
   const { slides, currentSlide, currentIndex, transitioning, slidesLoading } = useSlideshow();
@@ -16,17 +15,25 @@ export default function Hero() {
       {slides.map((slide, index) => (
         <div
           key={slide.id}
-          className={cn(
-            "absolute inset-0 bg-cover bg-center",
-            index === currentIndex && "animate-ken-burns"
-          )}
+          className="absolute inset-0"
           style={{
-            backgroundImage: `url(${slide.imageUrl})`,
-            opacity: index === currentIndex ? 1 : 0,
-            transition: "opacity 3000ms ease-in-out", // Matches FADE_DURATION in src/lib/slides.ts
             zIndex: index === currentIndex ? 2 : 1,
+            opacity: index === currentIndex ? 1 : 0,
+            transition: "opacity 2000ms ease-in-out",
           }}
-        />
+        >
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${slide.imageUrl})`,
+              transform: index === currentIndex ? "scale(1.08)" : "scale(1.0)",
+              transition: index === currentIndex 
+                ? "transform 6000ms ease-in-out" 
+                : "none",
+              transformOrigin: "center center",
+            }}
+          />
+        </div>
       ))}
 
       {/* Gradient overlay — smooth fade on all sides, heaviest at bottom */}
