@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Copy, Share2, ArrowRight, Compass, CheckCircle2, Loader2 } from 'lucide-react';
+import { CalendarIcon, Copy, Share2, ArrowRight, Compass, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -174,7 +174,12 @@ function CreateTripContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4 relative">
+      <Link href="/dashboard" className="absolute top-8 left-8 flex items-center gap-2 group text-zinc-400 hover:text-white transition-colors">
+        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm font-bold uppercase tracking-widest">Back</span>
+      </Link>
+
       <Link href="/dashboard" className="mb-8 flex items-center gap-2">
         <Compass className="w-8 h-8 text-[#0D9488]" />
         <span className="text-xl font-black tracking-tighter text-white">PackTogether</span>
