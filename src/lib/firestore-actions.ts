@@ -42,33 +42,58 @@ export async function joinTrip(db: Firestore, tripId: string, memberData: { name
     createdAt: serverTimestamp(),
   });
 
-  // Also update parent trip members map for security rules
   const tripRef = doc(db, 'trips', tripId);
-  const tripSnap = await getDoc(tripRef);
-  if (tripSnap.exists()) {
-    const currentMembers = tripSnap.data().members || {};
-    await updateDoc(tripRef, {
-      [`members.${memberId}`]: 'member'
-    });
-  }
+  await updateDoc(tripRef, {
+    [`members.${memberId}`]: 'member'
+  });
   
   return memberId;
 }
 
 export async function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
   const itemsRef = collection(db, 'trips', tripId, 'itineraryItems');
-  return addDoc(itemsRef, {
+  const docRef = await addDoc(itemsRef, {
     ...itemData,
     tripId,
+    actualBudget: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  // If it's a travel category, add default checklist items
+  if (itemData.category === 'travel') {
+    const checklistRef = collection(db, 'trips', tripId, 'itineraryItems', docRef.id, 'checklistItems');
+    const defaults = ['Tickets Downloaded', 'Hotel Confirmation', 'Local Cash Ready', 'Bags Packed'];
+    for (let i = 0; i < defaults.length; i++) {
+      await addDoc(checklistRef, {
+        description: defaults[i],
+        status: 'red',
+        order: i,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
+  return docRef.id;
 }
 
 export async function updateActualBudget(db: Firestore, tripId: string, itemId: string, amount: number) {
   const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
   return updateDoc(itemRef, {
     actualBudget: amount,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteItineraryItem(db: Firestore, tripId: string, itemId: string) {
+  const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
+  return deleteDoc(itemRef);
+}
+
+export async function updateChecklistItemStatus(db: Firestore, tripId: string, itemId: string, checklistId: string, newStatus: string) {
+  const checkRef = doc(db, 'trips', tripId, 'itineraryItems', itemId, 'checklistItems', checklistId);
+  return updateDoc(checkRef, {
+    status: newStatus,
     updatedAt: serverTimestamp(),
   });
 }
