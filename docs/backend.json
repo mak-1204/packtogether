@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "SlideshowSlide": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SlideshowSlide",
+      "type": "object",
+      "description": "Represents a single slide used in the landing page's background slideshow, containing an image, location, and display properties.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SlideshowSlide entity."
+        },
+        "location": {
+          "type": "string",
+          "description": "The geographical location associated with the slide's image, displayed as a pill on the landing page."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "The full URL of the background image for the slideshow slide.",
+          "format": "uri"
+        },
+        "order": {
+          "type": "number",
+          "description": "A numerical value determining the display sequence of the slide in the slideshow (lower numbers appear first)."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "A flag indicating whether this slide should be currently active and displayed in the slideshow."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the slideshow slide was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "imageUrl",
+        "order",
+        "active",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/slideshow/{slideId}",
+        "definition": {
+          "entityName": "SlideshowSlide",
+          "schema": {
+            "$ref": "#/backend/entities/SlideshowSlide"
+          },
+          "description": "Stores individual slide configurations for the landing page background slideshow. Documents are publicly readable but not publicly writable. Includes fields for location, image URL, display order, and active status.",
+          "params": [
+            {
+              "name": "slideId",
+              "description": "Unique identifier for a specific slideshow slide document."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure for the slideshow feature consists of a single top-level collection named `slideshow`. Each document within this collection, identified by `{slideId}`, represents a single slide displayed on the landing page. This design adheres strictly to the core principles outlined:\n\n**Authorization Independence (CRITICAL):** For this `slideshow` collection, authorization independence is inherently achieved because the security posture is public read (`allow read: if true`). There are no complex hierarchical authorization dependencies, owner checks, or membership lookups required. The rules do not depend on data from other documents (e.g., `get()` calls are avoided), allowing for simple, atomic operations and easy debugging.\n\n**QAPs (Rules are not Filters):** The security rule `allow read: if true;` grants unrestricted read access to all documents in the `/slideshow` collection. This design perfectly aligns with the QAP principle because the rule explicitly allows full access to the data, and the client-side code (`getSlideshowSlides` function) then performs the filtering (`where(\"active\", \"==\", true)`) and ordering (`orderBy(\"order\", \"asc\")`). The security rules are not attempting to *filter* the results based on complex conditions, but rather clearly define what data is accessible, making the system predictable and secure.\n\n**Structural Segregation:** All documents in the `slideshow` collection share the exact same security posture (public read). There is no mixing of public and private data, or data with different access requirements, within this collection. This simplifies security rules and makes their intent clear.\n\n**Access Modeling:** This structure uses a simple, top-level collection for globally accessible public data, which is a standard and efficient pattern for such use cases.\n\n**Data Clarity and Predictability:** The `SlideshowSlide` schema uses explicit fields like `active` for state modeling and `order` for display sequence, ensuring a predictable and clear data structure."
+  }
+}

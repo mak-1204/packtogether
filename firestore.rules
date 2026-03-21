@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * FIRESTORE SECURITY RULES - PROTOTYPING MODE
+     * 
+     * Core Philosophy: 
+     * This ruleset is designed for a landing page content delivery model. It provides 
+     * unrestricted public access to read-only assets while strictly prohibiting any 
+     * client-side modifications. This ensures the integrity of the UI components 
+     * (like the background slideshow) without requiring user authentication for visitors.
+     * 
+     * Data Structure: 
+     * All slideshow assets are stored in a top-level flat collection: `/slideshow/{slideId}`.
+     * 
+     * Key Security Decisions:
+     * 1. Public Reading: The slideshow is a core part of the landing page's visual identity. 
+     *    `get` and `list` operations are open to everyone (including anonymous/unauthenticated users).
+     * 2. Administrative Writes Only: To prevent vandalism or unauthorized content changes, 
+     *    `create`, `update`, and `delete` operations are denied at the rules level. 
+     *    Updates must be performed via the Firebase Console or an Admin SDK.
+     * 3. Authorization Over Schema: During this prototyping phase, we focus purely on 
+     *    access control. No data type or object shape validation is performed on the 
+     *    client-side to allow for rapid data evolution.
+     * 
+     * Denormalization for Authorization: 
+     * No complex joins or `get()` calls are required for this model as access is 
+     * determined solely by the collection path and the global public-read posture.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /**
+     * @description Checks if the request is from a signed-in user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Simple ownership check for user-scoped data.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Verifies the document exists and the user is the owner.
+     * Used for destructive or state-changing operations.
+     */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Stores individual slide configurations for the landing page background slideshow.
+     * @path /slideshow/{slideId}
+     * @allow (get, list) for all users, including unauthenticated visitors.
+     * @deny (create, update, delete) for all client-side requests to ensure content integrity.
+     * @principle Public Read with Admin-Only Writes.
+     */
+    match /slideshow/{slideId} {
+      // Publicly readable for the landing page to function without auth
+      allow get, list: if true;
+
+      // CRITICAL: Cannot implement owner-only writes. 
+      // The 'SlideshowSlide' entity is missing an 'ownerId' or 'authorId' field.
+      // Furthermore, this collection is intended to be managed strictly via Firebase Console.
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // --- DEFAULT DENY ---
+    // If a path is not explicitly matched above, all access is denied.
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
