@@ -15,39 +15,42 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  // Use startOfToday logic to avoid hydration mismatches
+  const [today, setToday] = React.useState<Date | undefined>(undefined);
+
+  React.useEffect(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    setToday(d);
+  }, []);
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
+      disabled={today ? { before: today } : undefined}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        months: "flex flex-col",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
+        caption: "flex justify-center pt-1 relative items-center mb-2",
+        caption_label: "text-white font-semibold",
+        nav: "flex items-center gap-1",
         nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          buttonVariants({ variant: "ghost" }),
+          "h-7 w-7 bg-transparent p-0 text-slate-400 hover:text-white transition"
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
-        ),
-        day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside:
-          "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "text-muted-foreground opacity-50",
+        table: "w-full border-collapse",
+        head_row: "grid grid-cols-7",
+        head_cell: "text-slate-400 text-xs font-medium text-center h-8 flex items-center justify-center",
+        row: "grid grid-cols-7 mt-1",
+        cell: "text-center p-0",
+        day: "h-8 w-8 mx-auto flex items-center justify-center rounded-full text-white text-sm hover:bg-teal-500/20 transition",
+        day_selected: "bg-teal-500 text-white hover:bg-teal-600",
+        day_today: "border border-teal-500 text-teal-400",
+        day_outside: "text-slate-600",
+        day_disabled: "text-slate-700 cursor-not-allowed opacity-50",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
