@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
 
 export default function Footer() {
   const [year, setYear] = useState<number | null>(null);
@@ -19,8 +20,10 @@ export default function Footer() {
           Your Gang. One Plan.
         </p>
 
-        <div className="mt-12 text-[10px] text-muted-foreground/30 uppercase tracking-[0.2em]">
-          Designed & Built with love by Mak
+        <div className="mt-12 text-[10px] text-muted-foreground/30 uppercase tracking-[0.2em] flex items-center justify-center gap-1.5">
+          <span>Designed & Built with</span>
+          <Heart className="w-3 h-3 text-primary fill-primary/20" />
+          <span>by Mak</span>
         </div>
 
         <div className="mt-4 text-xs text-muted-foreground/40">
