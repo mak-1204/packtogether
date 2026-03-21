@@ -5,12 +5,11 @@
 
 import { useState, useEffect } from 'react';
 import { getSlideshowSlides, type SlideshowSlide } from '@/lib/slideshowService';
-import { SLIDE_DURATION, FADE_DURATION } from '@/lib/slides';
+import { SLIDE_DURATION } from '@/lib/slides';
 
 export function useSlideshow() {
   const [slides, setSlides] = useState<SlideshowSlide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [slidesLoading, setSlidesLoading] = useState(true);
 
@@ -45,20 +44,24 @@ export function useSlideshow() {
     if (slides.length <= 1) return;
 
     const interval = setInterval(() => {
+      // Start fading out the location pill
       setTransitioning(true);
+      
+      // Advance the index after a short delay (for the pill fade)
+      // The background CSS transition handles its own crossfade simultaneously
       setTimeout(() => {
-        setPrevIndex(currentIndex); // save outgoing slide
         setCurrentIndex(prev => (prev + 1) % slides.length);
-        setTransitioning(false);
-      }, FADE_DURATION);
+        setTransitioning(false); // Pill fades back in for the new slide
+      }, 600);
+      
     }, SLIDE_DURATION);
 
     return () => clearInterval(interval);
-  }, [slides, currentIndex]);
+  }, [slides, slides.length]);
 
   return {
+    slides,
     currentSlide: slides[currentIndex] || null,
-    prevSlide: slides[prevIndex] || null,
     currentIndex,
     transitioning,
     slidesLoading,
