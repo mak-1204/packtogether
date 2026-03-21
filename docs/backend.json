@@ -13,6 +13,10 @@
         "firstName": {
           "type": "string",
           "description": "The first name of the user, used for personalized greetings."
+        },
+        "mobile": {
+          "type": "string",
+          "description": "The user's registered mobile number."
         }
       },
       "required": [
@@ -59,7 +63,7 @@
         },
         "organizerId": {
           "type": "string",
-          "description": "Reference to the UserProfile who created and organizes this trip. (Relationship: UserProfile 1:N Trip)"
+          "description": "Reference to the UserProfile who created and organizes this trip."
         },
         "status": {
           "type": "string",
@@ -104,274 +108,6 @@
         "totalActualBudget",
         "createdAt"
       ]
-    },
-    "TripMember": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "TripMember",
-      "type": "object",
-      "description": "Represents an individual's participation in a specific trip, whether logged-in or as a guest.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the TripMember entity."
-        },
-        "tripId": {
-          "type": "string",
-          "description": "Reference to the Trip this member belongs to. (Relationship: Trip 1:N TripMember)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Optional reference to the UserProfile if the member is logged in. (Relationship: UserProfile 0..1:N TripMember)"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the trip member, used for display and for guests without an account."
-        },
-        "mobile": {
-          "type": "string",
-          "description": "The mobile number of the trip member, primarily for guests joining without an account."
-        },
-        "role": {
-          "type": "string",
-          "description": "The role of the member within the trip (e.g., 'organizer', 'member').",
-          "format": "enum"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the trip member record was created.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "tripId",
-        "name",
-        "mobile",
-        "role",
-        "createdAt"
-      ]
-    },
-    "ItineraryItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ItineraryItem",
-      "type": "object",
-      "description": "Represents a single planned event, activity, or travel segment within a trip's daily schedule.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ItineraryItem entity."
-        },
-        "tripId": {
-          "type": "string",
-          "description": "Reference to the Trip this itinerary item belongs to. (Relationship: Trip 1:N ItineraryItem)"
-        },
-        "dayNumber": {
-          "type": "number",
-          "description": "The sequential day number of the trip on which this item is planned."
-        },
-        "name": {
-          "type": "string",
-          "description": "A descriptive name for the itinerary item (e.g., 'Dinner at Local Eatery', 'Flight to Goa')."
-        },
-        "category": {
-          "type": "string",
-          "description": "The category of the itinerary item (e.g., 'stay', 'food', 'transport', 'activity', 'travel').",
-          "format": "enum"
-        },
-        "plannedBudget": {
-          "type": "number",
-          "description": "The planned financial cost for this specific itinerary item."
-        },
-        "actualBudget": {
-          "type": "number",
-          "description": "The actual financial cost incurred for this specific itinerary item."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Additional notes or details pertinent to this itinerary item."
-        },
-        "mode": {
-          "type": "string",
-          "description": "The mode of travel if the category is 'travel' (e.g., 'train', 'flight', 'roadtrip', 'bus')."
-        },
-        "fromLocation": {
-          "type": "string",
-          "description": "The starting location for travel if the category is 'travel'."
-        },
-        "toLocation": {
-          "type": "string",
-          "description": "The destination location for travel if the category is 'travel'."
-        },
-        "departureTime": {
-          "type": "string",
-          "description": "The scheduled departure time for travel if the category is 'travel'.",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the itinerary item was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the itinerary item was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "tripId",
-        "dayNumber",
-        "name",
-        "category",
-        "plannedBudget",
-        "actualBudget",
-        "notes",
-        "createdAt"
-      ]
-    },
-    "ChecklistItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ChecklistItem",
-      "type": "object",
-      "description": "Represents a single item in a travel leg's preparation checklist, tracking its completion status.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ChecklistItem entity."
-        },
-        "itineraryItemId": {
-          "type": "string",
-          "description": "Reference to the ItineraryItem (specifically a 'travel' category item) this checklist item belongs to. (Relationship: ItineraryItem 1:N ChecklistItem)"
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of the task or item to be checked off."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the checklist item ('red' for pending/critical, 'yellow' for in-progress, 'green' for complete).",
-          "format": "enum"
-        },
-        "order": {
-          "type": "number",
-          "description": "A numeric value to define the display order of checklist items within a travel leg."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the checklist item was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the checklist item was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "itineraryItemId",
-        "description",
-        "status",
-        "order",
-        "createdAt"
-      ]
-    },
-    "Suggestion": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Suggestion",
-      "type": "object",
-      "description": "Represents a trip idea or recommendation submitted by a trip member, potentially evaluated by AI.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Suggestion entity."
-        },
-        "tripId": {
-          "type": "string",
-          "description": "Reference to the Trip this suggestion belongs to. (Relationship: Trip 1:N Suggestion)"
-        },
-        "link": {
-          "type": "string",
-          "description": "A URL providing more details about the suggestion (e.g., hotel booking, activity page).",
-          "format": "uri"
-        },
-        "notes": {
-          "type": "string",
-          "description": "User-provided additional context or thoughts about the suggestion."
-        },
-        "addedByMemberId": {
-          "type": "string",
-          "description": "Reference to the TripMember who submitted this suggestion. (Relationship: TripMember 1:N Suggestion)"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the suggestion was added.",
-          "format": "date-time"
-        },
-        "isAiRecommended": {
-          "type": "boolean",
-          "description": "Indicates whether this suggestion has been recommended by the AI assistant."
-        },
-        "aiReason": {
-          "type": "string",
-          "description": "The AI-generated explanation or rationale for recommending this suggestion."
-        }
-      },
-      "required": [
-        "id",
-        "tripId",
-        "link",
-        "notes",
-        "addedByMemberId",
-        "createdAt",
-        "isAiRecommended"
-      ]
-    },
-    "PackingItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PackingItem",
-      "type": "object",
-      "description": "Represents a single item that needs to be packed for a trip, including who is responsible for it.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the PackingItem entity."
-        },
-        "tripId": {
-          "type": "string",
-          "description": "Reference to the Trip this packing item belongs to. (Relationship: Trip 1:N PackingItem)"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the item to be packed (e.g., 'Charger', 'Swimsuit')."
-        },
-        "assignedToMemberId": {
-          "type": "string",
-          "description": "Optional reference to the TripMember assigned to pack this item. (Relationship: TripMember 0..1:N PackingItem)"
-        },
-        "isPacked": {
-          "type": "boolean",
-          "description": "Boolean indicating whether the item has been packed or not."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the packing item was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the packing item was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "tripId",
-        "name",
-        "isPacked",
-        "createdAt"
-      ]
     }
   },
   "auth": {
@@ -383,13 +119,13 @@
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}/profile",
+        "path": "/users/{userId}",
         "definition": {
           "entityName": "UserProfile",
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores individual user profile data. This is private data, accessible only by the authenticated user whose `request.auth.uid` matches `{userId}`.",
+          "description": "Stores individual user profile data.",
           "params": [
             {
               "name": "userId",
@@ -399,142 +135,24 @@
         }
       },
       {
-        "path": "/trips/{tripId}",
+        "path": "/users_by_mobile/{mobile}",
         "definition": {
-          "entityName": "Trip",
+          "entityName": "MobileLookup",
           "schema": {
-            "$ref": "#/backend/entities/Trip"
-          },
-          "description": "The main collection for trip documents. In addition to the schema properties, each document includes a denormalized `members` map (e.g., `members: { [userId]: 'role' }`) to enable Authorization Independence and QAPs for listing trips. This map includes the `organizerId` and all `TripMember` `userId`s for quick authentication checks in security rules.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique identifier for the trip."
+            "type": "object",
+            "properties": {
+              "uid": { "type": "string" }
             }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/members/{memberId}",
-        "definition": {
-          "entityName": "TripMember",
-          "schema": {
-            "$ref": "#/backend/entities/TripMember"
           },
-          "description": "Details for each participant in a specific trip. While `role` is stored here, direct authorization for other collections relies on the denormalized `members` map in the parent `Trip` document (and its subcollections) to avoid `get()` calls in rules. `memberId` will typically be `userId` for logged-in members or a generated ID for anonymous members.",
+          "description": "Used to check if a mobile number is already registered.",
           "params": [
             {
-              "name": "tripId",
-              "description": "The unique identifier of the parent trip."
-            },
-            {
-              "name": "memberId",
-              "description": "The unique identifier for the trip member, often matching `userId` for logged-in users."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/itineraryItems/{itemId}",
-        "definition": {
-          "entityName": "ItineraryItem",
-          "schema": {
-            "$ref": "#/backend/entities/ItineraryItem"
-          },
-          "description": "Individual events, activities, or travel segments for a trip. Each document denormalizes the `organizerId` and the `members` map from its parent `Trip` document. This allows security rules to evaluate access directly on the document without needing to `get()` the parent `Trip` document.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique identifier of the parent trip."
-            },
-            {
-              "name": "itemId",
-              "description": "The unique identifier for the itinerary item."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/itineraryItems/{itemId}/checklistItems/{checklistItemId}",
-        "definition": {
-          "entityName": "ChecklistItem",
-          "schema": {
-            "$ref": "#/backend/entities/ChecklistItem"
-          },
-          "description": "Checklist items associated with a specific 'travel' category itinerary item. Each document denormalizes the `organizerId` and `members` map from its grandparent `Trip` document, ensuring authorization independence. Organizer has full write access; members have read-only access to status.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique identifier of the grandparent trip."
-            },
-            {
-              "name": "itemId",
-              "description": "The unique identifier of the parent itinerary item (a travel leg)."
-            },
-            {
-              "name": "checklistItemId",
-              "description": "The unique identifier for the checklist item."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/suggestions/{suggestionId}",
-        "definition": {
-          "entityName": "Suggestion",
-          "schema": {
-            "$ref": "#/backend/entities/Suggestion"
-          },
-          "description": "Trip idea or recommendation submitted by a member. Each document denormalizes the `organizerId` and `members` map from its parent `Trip` document for authorization independence.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique identifier of the parent trip."
-            },
-            {
-              "name": "suggestionId",
-              "description": "The unique identifier for the suggestion."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/packingItems/{packingItemId}",
-        "definition": {
-          "entityName": "PackingItem",
-          "schema": {
-            "$ref": "#/backend/entities/PackingItem"
-          },
-          "description": "Items to be packed for a trip. Each document denormalizes the `organizerId` and `members` map from its parent `Trip` document for authorization independence.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique identifier of the parent trip."
-            },
-            {
-              "name": "packingItemId",
-              "description": "The unique identifier for the packing item."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/public_trip_summaries/{tripId}",
-        "definition": {
-          "entityName": "Trip",
-          "schema": {
-            "$ref": "#/backend/entities/Trip"
-          },
-          "description": "A structurally segregated, read-only collection providing a public summary of a trip. This document contains a denormalized subset of `Trip` data and its `ItineraryItems` (potentially as an embedded array). It has a completely public read security posture to support the `/view/{tripId}` page, updated via server-side triggers from changes in `/trips/{tripId}`.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique identifier for the public trip summary."
+              "name": "mobile",
+              "description": "The user's mobile number."
             }
           ]
         }
       }
-    ],
-    "reasoning": "This Firestore structure is designed to strictly adhere to the core principles, especially Authorization Independence and QAPs, ensuring robust security rules and efficient data access. \n\n**Authorization Independence (CRITICAL):** To completely avoid hierarchical authorization dependencies (i.e., `get()` calls in security rules), the crucial authorization context (`organizerId` and a `members` map) is denormalized directly into the `Trip` document and, subsequently, into every document within its subcollections (Itinerary Items, Checklist Items, Suggestions, Packing Items). This means that when a user attempts to access any document related to a trip (be it the trip itself or an item within its subcollections), the security rules can evaluate access by simply checking `request.auth.uid` against the `organizerId` or the `members` map present *within that specific document*, eliminating the need to read parent documents. This strategy not only simplifies rule logic but also prevents issues with atomic operations (transactions/batches) that arise from `get()` calls.\n\n**QAPs (Rules are not Filters):**\n1.  **For `/trips/{tripId}`:** The `Trip` collection is structured to support secure `list` operations. Each `Trip` document contains `organizerId` and a `members` map (e.g., `members: { [userId]: 'role' }`). A user can query for trips where their `request.auth.uid` matches the `organizerId` or is a key in the `members` map. This allows the client to fetch all relevant trips in a single query (e.g., `db.collection('trips').where('members.' + request.auth.uid, '!=', null)`), and the security rules can validate each document returned by verifying the `request.auth.uid` against the `resource.data.organizerId` or `resource.data.members` map on the read operation. This ensures that no unauthorized documents are returned, fulfilling the QAP.\n2.  **For Subcollections (e.g., `/trips/{tripId}/itineraryItems/{itemId}`):** Because the `organizerId` and `members` map are denormalized into each subcollection document, `list` operations on these subcollections can also be secured without `get()` calls. For example, a query for `itineraryItems` within a `tripId` can be authorized by checking `request.auth.uid` against the `organizerId` or `members` map *within each `itineraryItem` document* during the list operation, ensuring only authorized items are accessible.\n3.  **Structural Segregation for Public Data:** The `/public_trip_summaries/{tripId}` collection serves the public-facing view (`/view/{tripId}`). By creating a separate, denormalized collection with a simple `allow read: true` rule, public access is completely isolated from authenticated, collaborative trip data. This prevents accidental exposure of sensitive data and ensures optimal performance for public views without any authentication overhead.\n\n**Other Principles:**\n*   **DBAC:** User roles (`organizer`, `member`) are stored in the database (`organizerId` field and `members` map), eliminating custom claims. Authorization relies purely on `request.auth.uid` matching database entries.\n*   **Clarity of Intent:** Path names like `/users/{userId}/profile` and `/trips/{tripId}/itineraryItems/{itemId}` are explicit. Denormalized fields are clearly named (`organizerId`, `members`).\n*   **Access Modeling:** Consistent use of path-based ownership for user profiles, top-level collection for collaborative trips with denormalized membership, and hierarchical subcollections for nested trip data.\n*   **Data Clarity:** `status` field for `Trip` state, `createdAt`/`updatedAt` timestamps, and `totalPlannedBudget`/`totalActualBudget` as denormalized aggregates ensure data predictability and integrity.\n\nThis design prioritizes secure and debuggable rules over strict data normalization, embracing denormalization as a key strategy for robust access control in Firestore."
+    ]
   }
 }

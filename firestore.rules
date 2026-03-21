@@ -19,7 +19,7 @@ service cloud.firestore {
     }
 
     function isMember(data) {
-      return isSignedIn() && (data.organizerId == request.auth.uid || data.members[request.auth.uid] != null);
+      return isSignedIn() && (data.organizerId == request.auth.uid || (data.members != null && data.members[request.auth.uid] != null));
     }
 
     /** @description Slideshow for landing page. */
@@ -28,16 +28,20 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /users/{userId}/profile {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+    /** @description User mobile lookup for auth flow. */
+    match /users_by_mobile/{mobile} {
+      allow get: if true; // Required for existence check in AuthPage
+      allow create, update, delete: if isSignedIn();
+    }
+
+    /** @description Standard user profile path. */
+    match /users/{userId} {
+      allow get, list, write: if isOwner(userId);
     }
 
     match /trips/{tripId} {
       allow get: if true; // Allow public view for /join and /view
-      allow list: if isSignedIn() && (resource.data.organizerId == request.auth.uid || resource.data.members[request.auth.uid] != null);
+      allow list: if isSignedIn() && (resource.data.organizerId == request.auth.uid || (resource.data.members != null && resource.data.members[request.auth.uid] != null));
       allow create: if isSignedIn();
       allow update: if isMember(resource.data);
       allow delete: if isOrganizer(resource.data);
@@ -51,6 +55,10 @@ service cloud.firestore {
       match /itineraryItems/{itemId} {
         allow get, list: if true;
         allow create, update, delete: if true; // Collaborative
+        
+        match /checklistItems/{checklistItemId} {
+           allow get, list, write: if true;
+        }
       }
 
       match /suggestions/{suggestionId} {

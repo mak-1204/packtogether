@@ -30,6 +30,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && firestore) {
+      // Fetch the user's profile from the corrected path
       getDoc(doc(firestore, 'users', user.uid)).then(snap => {
         if (snap.exists()) setUserProfile(snap.data());
       });
@@ -83,6 +84,7 @@ export default function DashboardPage() {
     }
   };
 
+  // Prioritize the firstName from the users collection as requested
   const displayName = userProfile?.firstName || user.displayName || 'Traveler';
   const displayMobile = userProfile?.mobile || '';
 
