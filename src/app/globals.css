@@ -37,16 +37,16 @@
 }
 
 @keyframes ken-burns {
-  0% {
-    transform: scale(1) translate(0, 0);
+  from {
+    transform: scale(1);
   }
-  100% {
-    transform: scale(1.1) translate(-1%, -1%);
+  to {
+    transform: scale(1.15);
   }
 }
 
 .animate-ken-burns {
-  animation: ken-burns 10s ease-out infinite alternate;
+  animation: ken-burns 15s ease-out forwards;
 }
 
 .text-gradient {

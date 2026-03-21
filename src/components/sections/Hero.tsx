@@ -1,8 +1,9 @@
 'use client';
 
-import { Compass } from 'lucide-react';
+import { Compass, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
+import { cn } from '@/lib/utils';
 
 export default function Hero() {
   const { slides, currentSlide, currentIndex, transitioning, slidesLoading } = useSlideshow();
@@ -15,7 +16,10 @@ export default function Hero() {
       {slides.map((slide, index) => (
         <div
           key={slide.id}
-          className="absolute inset-0 bg-cover bg-center"
+          className={cn(
+            "absolute inset-0 bg-cover bg-center",
+            index === currentIndex && "animate-ken-burns"
+          )}
           style={{
             backgroundImage: `url(${slide.imageUrl})`,
             opacity: index === currentIndex ? 1 : 0,
@@ -66,14 +70,15 @@ export default function Hero() {
       {/* Location pill — synced to current slide */}
       {!slidesLoading && currentSlide && (
         <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[4] flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white/90 border border-white/10 backdrop-blur-md"
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[4] flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white border border-white/10 backdrop-blur-md"
           style={{
-            backgroundColor: "rgba(15,23,42,0.6)",
+            backgroundColor: "rgba(15,23,42,0.7)",
             opacity: transitioning ? 0 : 1,
             transition: "opacity 600ms ease-in-out"
           }}
         >
-          📍 {currentSlide.location}
+          <MapPin className="w-4 h-4 text-white/80" />
+          {currentSlide.location}
         </div>
       )}
     </section>
