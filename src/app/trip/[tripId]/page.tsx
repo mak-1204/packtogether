@@ -61,7 +61,8 @@ import { format, addDays } from 'date-fns';
 const COLORS = ['#0D9488', '#F7A90A', '#3B82F6', '#8B5CF6', '#EC4899'];
 
 export default function TripDetailsPage() {
-  const { tripId } = useParams() as { tripId: string };
+  const params = useParams();
+  const tripId = params?.tripId as string;
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
@@ -76,7 +77,8 @@ export default function TripDetailsPage() {
   const itineraryQuery = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
     try {
-      return query(collection(firestore, 'trips', tripId, 'itineraryItems'), orderBy('dayNumber'), orderBy('createdAt'));
+      // Simplified query to avoid needing composite indexes for now
+      return query(collection(firestore, 'trips', tripId, 'itineraryItems'), orderBy('dayNumber'));
     } catch (e) {
       return null;
     }
@@ -116,7 +118,7 @@ export default function TripDetailsPage() {
   const { data: members } = useCollection(membersQuery);
 
   const isOrganizer = user?.uid === trip?.organizerId;
-  const isMember = user && trip?.members && !!trip.members[user.uid];
+  const isMember = user && trip?.members && (!!trip.members[user.uid] || user.uid === trip.organizerId);
 
   useEffect(() => {
     if (!isTripLoading && !isUserLoading && trip && !isOrganizer && !isMember) {
@@ -446,7 +448,7 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
 }
 
 function ChecklistTab({ firestore, trip, itinerary, isOrganizer }: { firestore: Firestore, trip: any, itinerary: any, isOrganizer: boolean }) {
-  const travelLegs = itinerary?.filter((i: any) => i.category === 'travel') || [];
+  const travelLegs = (itinerary || []).filter((i: any) => i.category === 'travel');
   
   const [hasUrgentItems, setHasUrgentItems] = useState(false);
   const tripStartsSoon = toDate(trip.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000;
@@ -728,15 +730,15 @@ function PackingTab({ firestore, trip, packing, isOrganizer }: { firestore: Fire
 function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { firestore: Firestore, trip: any, itinerary: any, members: any, isOrganizer: boolean }) {
   const router = useRouter();
 
-  const totalActual = itinerary?.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0;
-  const totalPlanned = itinerary?.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0;
+  const totalActual = (itinerary || []).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
+  const totalPlanned = (itinerary || []).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0);
   const diff = totalPlanned - totalActual;
 
   const categories = ['food', 'stay', 'transport', 'activity', 'travel'];
   const chartData = categories.map(cat => ({
     name: cat.charAt(0).toUpperCase() + cat.slice(1),
-    actual: itinerary?.filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0,
-    planned: itinerary?.filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0,
+    actual: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0),
+    planned: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0),
   })).filter(d => d.actual > 0 || d.planned > 0);
 
   const pieData = chartData.map((d, i) => ({ name: d.name, value: d.actual }));

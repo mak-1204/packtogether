@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -74,7 +73,7 @@ export function useCollection<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
+      (err: FirestoreError) => {
         let path: string = 'unknown';
         
         if (memoizedTargetRefOrQuery.type === 'collection') {
@@ -86,16 +85,20 @@ export function useCollection<T = any>(
           }
         }
 
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path,
-        })
+        setError(err);
+        setData(null);
+        setIsLoading(false);
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-
-        errorEmitter.emit('permission-error', contextualError);
+        // Only emit to global listener if it's a permission error
+        if (err.code === 'permission-denied') {
+          const contextualError = new FirestorePermissionError({
+            operation: 'list',
+            path,
+          });
+          errorEmitter.emit('permission-error', contextualError);
+        } else {
+          console.error("Firestore useCollection error:", err);
+        }
       }
     );
 
