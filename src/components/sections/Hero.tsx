@@ -23,7 +23,7 @@ export default function Hero() {
           style={{
             backgroundImage: `url(${slide.imageUrl})`,
             opacity: index === currentIndex ? 1 : 0,
-            transition: "opacity 2000ms ease-in-out",
+            transition: "opacity 3000ms ease-in-out", // Matches FADE_DURATION in src/lib/slides.ts
             zIndex: index === currentIndex ? 2 : 1,
           }}
         />
