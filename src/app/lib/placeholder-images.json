@@ -1,0 +1,53 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "coorg",
+      "description": "Coorg",
+      "imageUrl": "https://picsum.photos/seed/coorg-travel/1920/1080",
+      "imageHint": "Coorg hills"
+    },
+    {
+      "id": "jaisalmer",
+      "description": "Jaisalmer",
+      "imageUrl": "https://picsum.photos/seed/jaisalmer-desert/1920/1080",
+      "imageHint": "Jaisalmer desert"
+    },
+    {
+      "id": "kerala",
+      "description": "Kerala Backwaters",
+      "imageUrl": "https://picsum.photos/seed/kerala-backwaters/1920/1080",
+      "imageHint": "Kerala backwaters"
+    },
+    {
+      "id": "ladakh",
+      "description": "Ladakh",
+      "imageUrl": "https://picsum.photos/seed/ladakh-mountains/1920/1080",
+      "imageHint": "Ladakh mountains"
+    },
+    {
+      "id": "goa",
+      "description": "Goa",
+      "imageUrl": "https://picsum.photos/seed/goa-beach/1920/1080",
+      "imageHint": "Goa beach"
+    },
+    {
+      "id": "hampi",
+      "description": "Hampi",
+      "imageUrl": "https://picsum.photos/seed/hampi-ruins/1920/1080",
+      "imageHint": "Hampi ruins"
+    },
+    {
+      "id": "meghalaya",
+      "description": "Meghalaya",
+      "imageUrl": "https://picsum.photos/seed/meghalaya-clouds/1920/1080",
+      "imageHint": "Meghalaya waterfalls"
+    },
+    {
+      "id": "pondicherry",
+      "description": "Pondicherry",
+      "imageUrl": "https://picsum.photos/seed/pondicherry-street/1920/1080",
+      "imageHint": "Pondicherry street"
+    }
+  ]
+}
