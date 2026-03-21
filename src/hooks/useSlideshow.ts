@@ -1,6 +1,6 @@
 'use client';
 /**
- * @fileOverview Custom hook for managing the landing page background slideshow state from Firestore with debugging.
+ * @fileOverview Custom hook for managing the landing page background slideshow state from Firestore with smooth transitions.
  */
 
 import { useState, useEffect } from 'react';
@@ -10,6 +10,7 @@ import { SLIDE_DURATION, FADE_DURATION } from '@/lib/slides';
 export function useSlideshow() {
   const [slides, setSlides] = useState<SlideshowSlide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [slidesLoading, setSlidesLoading] = useState(true);
 
@@ -17,19 +18,12 @@ export function useSlideshow() {
   useEffect(() => {
     async function fetchSlides() {
       const data = await getSlideshowSlides();
-      console.log("useSlideshow received:", data.length, "slides");
       
       if (data.length > 0) {
         // Preload first image before starting
         const img = new Image();
         img.src = data[0].imageUrl;
         img.onload = () => {
-          console.log("First image preloaded:", data[0].imageUrl);
-          setSlides(data);
-          setSlidesLoading(false);
-        };
-        img.onerror = (e) => {
-          console.error("Failed to preload first image:", data[0].imageUrl, e);
           setSlides(data);
           setSlidesLoading(false);
         };
@@ -40,7 +34,6 @@ export function useSlideshow() {
           i.src = slide.imageUrl;
         });
       } else {
-        console.warn("No slides found in Firestore.");
         setSlidesLoading(false);
       }
     }
@@ -49,21 +42,23 @@ export function useSlideshow() {
 
   // Slideshow interval — only starts after slides are loaded
   useEffect(() => {
-    if (slides.length === 0) return;
+    if (slides.length <= 1) return;
 
     const interval = setInterval(() => {
       setTransitioning(true);
       setTimeout(() => {
+        setPrevIndex(currentIndex); // save outgoing slide
         setCurrentIndex(prev => (prev + 1) % slides.length);
         setTransitioning(false);
       }, FADE_DURATION);
     }, SLIDE_DURATION);
 
     return () => clearInterval(interval);
-  }, [slides]);
+  }, [slides, currentIndex]);
 
   return {
     currentSlide: slides[currentIndex] || null,
+    prevSlide: slides[prevIndex] || null,
     currentIndex,
     transitioning,
     slidesLoading,

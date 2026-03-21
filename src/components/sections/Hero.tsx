@@ -3,37 +3,38 @@
 import { Compass, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
+import { FADE_DURATION } from '@/lib/slides';
 
 export default function Hero() {
-  const { currentSlide, transitioning, slidesLoading } = useSlideshow();
-
-  // Log current slide state for debugging
-  if (typeof window !== 'undefined') {
-    console.log("Hero component state:", { 
-      hasSlide: !!currentSlide, 
-      imageUrl: currentSlide?.imageUrl,
-      transitioning, 
-      slidesLoading 
-    });
-  }
+  const { currentSlide, prevSlide, transitioning, slidesLoading } = useSlideshow();
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#0F172A]">
-      {/* Background image layer */}
+      {/* Layer 1 — outgoing slide (fades out) */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1500ms]"
+        className="absolute inset-0 bg-cover bg-center z-0"
         style={{
-          backgroundImage: currentSlide ? `url(${currentSlide.imageUrl})` : "none",
-          opacity: transitioning ? 0 : 1,
-          backgroundColor: "#0F172A",
+          backgroundImage: prevSlide ? `url(${prevSlide.imageUrl})` : "none",
+          opacity: transitioning ? 1 : 0,
+          transition: `opacity ${FADE_DURATION}ms ease-in-out`,
         }}
       />
 
-      {/* Dark overlay — always on top of image */}
+      {/* Layer 2 — incoming slide (always visible) */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 bg-cover bg-center z-0"
         style={{
-          background: "linear-gradient(to bottom, rgba(15,23,42,0.35) 0%, rgba(15,23,42,0.65) 100%)"
+          backgroundImage: currentSlide ? `url(${currentSlide.imageUrl})` : "none",
+          opacity: transitioning ? 0 : 1,
+          transition: `opacity ${FADE_DURATION}ms ease-in-out`,
+        }}
+      />
+
+      {/* Permanent gradient overlay — never animate this */}
+      <div
+        className="absolute inset-0 z-10"
+        style={{
+          background: "linear-gradient(to bottom, rgba(15,23,42,0.45) 0%, rgba(15,23,42,0.55) 50%, rgba(15,23,42,0.75) 100%)"
         }}
       />
 
@@ -46,7 +47,7 @@ export default function Hero() {
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 max-w-5xl mx-auto">
+      <div className="relative z-20 flex flex-col items-center justify-center h-full text-center px-4 max-w-5xl mx-auto">
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 font-headline tracking-tighter leading-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
           Your Gang. <br /> One Plan.
         </h1>
