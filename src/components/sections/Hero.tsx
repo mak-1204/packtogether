@@ -82,7 +82,7 @@ export default function Hero() {
           Stop planning trips on WhatsApp. PackTogether gives your friend group one place to plan, decide, and track — together.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-white text-lg px-8 h-14 rounded-full font-medium">
+          <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 h-14 rounded-full font-medium">
             Create a Trip
           </Button>
           <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8 h-14 rounded-full font-medium">
@@ -101,7 +101,7 @@ export default function Hero() {
             transition: "opacity 600ms ease-in-out"
           }}
         >
-          <MapPin className="w-4 h-4 text-white/70" />
+          <MapPin className="w-4 h-4 text-primary/70" />
           <span className="tracking-wide">{currentSlide.location}</span>
         </div>
       )}
