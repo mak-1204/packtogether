@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { createTrip } from '@/lib/firestore-actions';
 import { useRouter } from 'next/navigation';
@@ -27,6 +27,12 @@ export default function CreateTripPage() {
   const { firestore } = useFirestore();
   const router = useRouter();
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
   const [name, setName] = useState('');
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState<Date>();
@@ -36,11 +42,7 @@ export default function CreateTripPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTripId, setCreatedTripId] = useState<string | null>(null);
 
-  if (isUserLoading) return null;
-  if (!user) {
-    router.push('/');
-    return null;
-  }
+  if (isUserLoading || !user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { doc, collection, query, orderBy, where } from 'firebase/firestore';
+import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   getMemberSession, 
@@ -59,7 +59,7 @@ import { format, addDays } from 'date-fns';
 export default function TripDetailsPage() {
   const { tripId } = useParams() as { tripId: string };
   const { firestore } = useFirestore();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('itinerary');
@@ -95,15 +95,20 @@ export default function TripDetailsPage() {
   const { data: suggestions } = useCollection(suggestionsQuery);
   const { data: packing } = useCollection(packingQuery);
 
-  if (isTripLoading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
-  if (!trip) return <div className="min-h-screen bg-background flex items-center justify-center">Trip not found.</div>;
-
-  const isOrganizer = user?.uid === trip.organizerId;
+  const isOrganizer = user?.uid === trip?.organizerId;
   const isMember = !!session;
 
+  useEffect(() => {
+    if (!isTripLoading && !isUserLoading && trip && !isOrganizer && !isMember && session !== null) {
+      router.push(`/join/${tripId}`);
+    }
+  }, [isTripLoading, isUserLoading, trip, isOrganizer, isMember, session, tripId, router]);
+
+  if (isTripLoading || isUserLoading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+  if (!trip) return <div className="min-h-screen bg-background flex items-center justify-center">Trip not found.</div>;
+
   if (!isOrganizer && !isMember) {
-    router.push(`/join/${tripId}`);
-    return null;
+    return null; // The useEffect will handle the redirect
   }
 
   const totalPlanned = itinerary?.reduce((sum, item) => sum + (item.plannedBudget || 0), 0) || 0;
@@ -660,7 +665,7 @@ function SummaryTab({ trip, itinerary, isOrganizer }: any) {
   const chartData = categories.map(cat => ({
     name: cat.charAt(0).toUpperCase() + cat.slice(1),
     actual: itinerary?.filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0,
-    planned: itinerary?.filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0,
+    planned: itinerary?.filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0,
   })).filter(d => d.actual > 0 || d.planned > 0);
 
   return (

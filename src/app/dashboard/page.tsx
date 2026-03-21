@@ -1,7 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,12 @@ export default function DashboardPage() {
   const auth = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -30,10 +37,12 @@ export default function DashboardPage() {
 
   const { data: trips, isLoading: isTripsLoading } = useCollection(tripsQuery);
 
-  if (isUserLoading) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white">Loading your adventures...</div>;
-  if (!user) {
-    router.push('/');
-    return null;
+  if (isUserLoading || !user) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white">
+        Loading your adventures...
+      </div>
+    );
   }
 
   const handleLogout = () => signOut(auth).then(() => router.push('/'));
