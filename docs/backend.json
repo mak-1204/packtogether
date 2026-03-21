@@ -1,109 +1,37 @@
-
 {
   "entities": {
     "UserProfile": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents additional information about an authenticated user, complementing an external authentication system. Contains non-sensitive user profile data.",
+      "description": "Represents non-sensitive user profile data.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserProfile entity. This typically matches the user's ID from an external authentication system."
-        },
-        "firstName": {
-          "type": "string",
-          "description": "The first name of the user, used for personalized greetings."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's registered email address."
-        },
-        "photoURL": {
-          "type": "string",
-          "description": "URL to the user's profile picture."
-        }
+        "id": { "type": "string" },
+        "firstName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" }
       },
-      "required": [
-        "id",
-        "firstName"
-      ]
+      "required": ["id", "firstName"]
     },
     "Trip": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Trip",
       "type": "object",
-      "description": "Represents a single trip plan, encompassing its core details, budget, and organizational information.",
+      "description": "Represents a single trip plan.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Trip entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name given to the trip by the organizer."
-        },
-        "destination": {
-          "type": "string",
-          "description": "The primary destination for the trip."
-        },
-        "startDate": {
-          "type": "string",
-          "description": "The planned start date of the trip.",
-          "format": "date-time"
-        },
-        "endDate": {
-          "type": "string",
-          "description": "The planned end date of the trip.",
-          "format": "date-time"
-        },
-        "budgetPerHead": {
-          "type": "number",
-          "description": "The estimated budget per person for the entire trip."
-        },
-        "vibe": {
-          "type": "string",
-          "description": "The overall style or nature of the trip (e.g., Budget, Mid-Range, Luxury)."
-        },
-        "organizerId": {
-          "type": "string",
-          "description": "Reference to the UserProfile who created and organizes this trip."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current planning status of the trip (e.g., Planning, Ongoing, Completed)."
-        },
-        "coverImageUrl": {
-          "type": "string",
-          "description": "URL for a cover image representing the trip's destination."
-        },
-        "members": {
-          "type": "object",
-          "description": "A map of user IDs to their roles in the trip.",
-          "additionalProperties": { "type": "string" }
-        },
-        "totalPlannedBudget": {
-          "type": "number",
-          "description": "The sum of planned budgets from all itinerary items for the trip."
-        },
-        "totalActualBudget": {
-          "type": "number",
-          "description": "The sum of actual expenses from all itinerary items for the trip."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "destination": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "budgetPerHead": { "type": "number" },
+        "vibe": { "type": "string" },
+        "organizerId": { "type": "string" },
+        "status": { "type": "string" },
+        "coverImageUrl": { "type": "string" },
+        "members": { "type": "object", "additionalProperties": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "name",
-        "destination",
-        "organizerId"
-      ]
+      "required": ["name", "destination", "organizerId"]
     },
     "ItineraryItem": {
       "title": "ItineraryItem",
@@ -112,53 +40,62 @@
         "name": { "type": "string" },
         "category": { "type": "string" },
         "dayNumber": { "type": "number" },
-        "timeSlot": { 
-          "type": "string",
-          "enum": ["Morning", "Afternoon", "Evening", "Night"],
-          "description": "The time of day for this activity."
-        },
+        "timeSlot": { "type": "string", "enum": ["Morning", "Afternoon", "Evening", "Night"] },
         "plannedBudget": { "type": "number" },
         "actualBudget": { "type": "number" },
+        "notes": { "type": "string" }
+      }
+    },
+    "Suggestion": {
+      "title": "Suggestion",
+      "type": "object",
+      "description": "A link or idea shared by trip members.",
+      "properties": {
+        "link": { "type": "string" },
         "notes": { "type": "string" },
-        "mode": { "type": "string" },
-        "fromLocation": { "type": "string" },
-        "toLocation": { "type": "string" },
-        "departureTime": { "type": "string" }
+        "addedBy": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" },
+        "aiRecommended": { "type": "boolean" },
+        "aiReason": { "type": "string" }
+      }
+    },
+    "PackingItem": {
+      "title": "PackingItem",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "isPacked": { "type": "boolean" },
+        "addedAt": { "type": "string", "format": "date-time" }
       }
     }
   },
   "auth": {
-    "providers": [
-      "google",
-      "password"
-    ]
+    "providers": ["google", "password"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": { "$ref": "#/backend/entities/UserProfile" },
-          "description": "Stores individual user profile data."
-        }
-      },
-      {
-        "path": "/trips/{tripId}",
-        "definition": {
-          "entityName": "Trip",
-          "schema": { "$ref": "#/backend/entities/Trip" },
-          "description": "Core trip data."
-        }
-      },
-      {
-        "path": "/trips/{tripId}/itineraryItems/{itemId}",
-        "definition": {
-          "entityName": "ItineraryItem",
-          "schema": { "$ref": "#/backend/entities/ItineraryItem" },
-          "description": "Individual activities or travel legs for a trip."
-        }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/UserProfile" },
+      "description": "Stores user profiles."
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/backend/entities/Trip" },
+      "description": "Main trip document."
+    },
+    "/trips/{tripId}/itineraryItems/{itemId}": {
+      "schema": { "$ref": "#/backend/entities/ItineraryItem" },
+      "description": "Trip activities."
+    },
+    "/trips/{tripId}/itineraryItems/{itemId}/suggestions/{suggestionId}": {
+      "schema": { "$ref": "#/backend/entities/Suggestion" },
+      "description": "Specific options for an itinerary activity."
+    },
+    "/trips/{tripId}/suggestions/{suggestionId}": {
+      "schema": { "$ref": "#/backend/entities/Suggestion" },
+      "description": "General trip suggestions."
+    },
+    "/trips/{tripId}/packingItems/{packingItemId}": {
+      "schema": { "$ref": "#/backend/entities/PackingItem" },
+      "description": "Shared packing list items."
+    }
   }
 }

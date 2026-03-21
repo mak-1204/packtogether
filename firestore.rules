@@ -1,11 +1,10 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
      * PACKTOGETHER SECURITY RULES
-     * Updated to handle collection-level listing permissions correctly.
+     * Updated to handle nested subcollections for activity suggestions and checklists.
      */
 
     function isSignedIn() {
@@ -42,15 +41,12 @@ service cloud.firestore {
       allow get: if true;
       
       // Allow signed-in users to list trips (for the dashboard)
-      // Note: This applies to the collection list operation
       allow list: if isSignedIn();
       
       allow create: if isSignedIn();
       allow update: if isMember(resource.data);
       allow delete: if isOrganizer(resource.data);
 
-      // Subcollections - We explicitly allow read (get/list) for public sharing
-      
       match /members/{memberId} {
         allow read: if true;
         allow create: if true;    // Anyone can join via link
@@ -58,11 +54,15 @@ service cloud.firestore {
       }
 
       match /itineraryItems/{itemId} {
-        // 'read' allows both 'get' (single doc) and 'list' (collection query)
         allow read: if true; 
         allow write: if isSignedIn(); 
         
         match /checklistItems/{checklistItemId} {
+           allow read: if true;
+           allow write: if isSignedIn();
+        }
+
+        match /suggestions/{suggestionId} {
            allow read: if true;
            allow write: if isSignedIn();
         }
