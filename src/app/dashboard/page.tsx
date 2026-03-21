@@ -84,8 +84,8 @@ export default function DashboardPage() {
     }
   };
 
-  // Prioritize the firstName from the users collection as requested
-  const displayName = userProfile?.firstName || user.displayName || 'Traveler';
+  // Get first name prioritized from Firestore profile, then Google display name, then fallback
+  const firstName = userProfile?.firstName || user.displayName?.split(" ")[0] || 'Traveler';
   const displayMobile = userProfile?.mobile || '';
 
   return (
@@ -99,13 +99,13 @@ export default function DashboardPage() {
           </Link>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end mr-1">
-              <span className="text-sm font-black text-white leading-tight">{displayName}</span>
+              <span className="text-sm font-black text-white leading-tight">{firstName}</span>
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{displayMobile}</span>
             </div>
             <Avatar className="h-9 w-9 border border-white/10 shadow-lg">
               <AvatarImage src={user.photoURL || ''} />
               <AvatarFallback className="bg-[#0D9488] text-white font-bold">
-                {displayName[0].toUpperCase()}
+                {firstName[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -118,7 +118,7 @@ export default function DashboardPage() {
       <main className="container max-w-7xl mx-auto px-4 py-10">
         <div className="mb-10">
           <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight">
-            Hey {displayName.split(' ')[0]} 👋
+            Hey {firstName} 👋
           </h1>
           <p className="text-zinc-400 text-lg">Ready for the next one?</p>
         </div>
