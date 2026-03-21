@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,7 +6,6 @@ import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  getMemberSession, 
   updateActualBudget, 
   addItineraryItem, 
   addSuggestion, 
@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Accordion,
   AccordionContent,
@@ -67,12 +68,6 @@ export default function TripDetailsPage() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('itinerary');
-  const [session, setSession] = useState<any>(null);
-
-  useEffect(() => {
-    const s = getMemberSession(tripId);
-    setSession(s);
-  }, [tripId]);
 
   const tripRef = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
@@ -94,19 +89,25 @@ export default function TripDetailsPage() {
     return query(collection(firestore, 'trips', tripId, 'packingItems'), orderBy('createdAt'));
   }, [firestore, tripId]);
 
+  const membersQuery = useMemoFirebase(() => {
+    if (!firestore || !tripId) return null;
+    return query(collection(firestore, 'trips', tripId, 'members'), orderBy('joinedAt'));
+  }, [firestore, tripId]);
+
   const { data: trip, isLoading: isTripLoading } = useDoc(tripRef);
   const { data: itinerary } = useCollection(itineraryQuery);
   const { data: suggestions } = useCollection(suggestionsQuery);
   const { data: packing } = useCollection(packingQuery);
+  const { data: members } = useCollection(membersQuery);
 
   const isOrganizer = user?.uid === trip?.organizerId;
-  const isMember = !!session;
+  const isMember = user && trip?.members && !!trip.members[user.uid];
 
   useEffect(() => {
-    if (!isTripLoading && !isUserLoading && trip && !isOrganizer && !isMember && session === null) {
+    if (!isTripLoading && !isUserLoading && trip && !isOrganizer && !isMember) {
       router.push(`/join/${tripId}`);
     }
-  }, [isTripLoading, isUserLoading, trip, isOrganizer, isMember, session, tripId, router]);
+  }, [isTripLoading, isUserLoading, trip, isOrganizer, isMember, tripId, router]);
 
   if (isTripLoading || isUserLoading) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-teal-500"><Loader2 className="animate-spin" /></div>;
   if (!trip) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white font-bold">Trip not found.</div>;
@@ -145,13 +146,13 @@ export default function TripDetailsPage() {
             <ChecklistTab trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
           </TabsContent>
           <TabsContent value="suggestions" className="mt-0">
-            <SuggestionsTab trip={trip} suggestions={suggestions} session={session} isOrganizer={isOrganizer} />
+            <SuggestionsTab trip={trip} suggestions={suggestions} isOrganizer={isOrganizer} />
           </TabsContent>
           <TabsContent value="packing" className="mt-0">
             <PackingTab trip={trip} packing={packing} isOrganizer={isOrganizer} />
           </TabsContent>
           <TabsContent value="summary" className="mt-0">
-            <SummaryTab trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
+            <SummaryTab trip={trip} itinerary={itinerary} members={members} isOrganizer={isOrganizer} />
           </TabsContent>
 
           <TabsList className="fixed bottom-0 left-0 right-0 h-16 bg-[#0F172A] border-t border-white/5 rounded-none grid grid-cols-5 z-50 p-0">
@@ -539,8 +540,9 @@ function LegChecklistCard({ leg, tripId, isOrganizer, onUrgentChange }: any) {
   );
 }
 
-function SuggestionsTab({ trip, suggestions, session, isOrganizer }: any) {
+function SuggestionsTab({ trip, suggestions, isOrganizer }: any) {
   const { firestore } = useFirestore();
+  const { user } = useUser();
   const [link, setLink] = useState('');
   const [notes, setNotes] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -550,7 +552,7 @@ function SuggestionsTab({ trip, suggestions, session, isOrganizer }: any) {
     await addSuggestion(firestore!, trip.id, {
       link,
       notes,
-      addedBy: session?.name || 'Anonymous'
+      addedBy: user?.displayName || user?.email?.split('@')[0] || 'Member'
     });
     setLink('');
     setNotes('');
@@ -709,7 +711,7 @@ function PackingTab({ trip, packing, isOrganizer }: any) {
   );
 }
 
-function SummaryTab({ trip, itinerary, isOrganizer }: any) {
+function SummaryTab({ trip, itinerary, members, isOrganizer }: any) {
   const { firestore } = useFirestore();
   const router = useRouter();
 
@@ -778,14 +780,17 @@ function SummaryTab({ trip, itinerary, isOrganizer }: any) {
       <div className="space-y-4">
         <h3 className="font-black text-white text-lg tracking-tight px-2">The Crew</h3>
         <div className="grid grid-cols-2 gap-3">
-          {Object.entries(trip.members || {}).map(([id, role]: any) => (
-            <div key={id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
-              <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-500 text-sm font-black">
-                {id[0].toUpperCase()}
-              </div>
+          {members?.map((m: any) => (
+            <div key={m.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
+              <Avatar className="h-9 w-9 border border-white/10">
+                <AvatarImage src={m.photoURL || ''} />
+                <AvatarFallback className="bg-teal-500/20 text-teal-500 text-sm font-black">
+                  {m.name[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className="min-w-0">
-                <p className="text-xs font-black text-white truncate">Member</p>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{role}</p>
+                <p className="text-xs font-black text-white truncate">{m.name}</p>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{m.role}</p>
               </div>
             </div>
           ))}

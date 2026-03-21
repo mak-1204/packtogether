@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -31,21 +32,27 @@ export async function createTrip(db: Firestore, tripData: any, userId: string) {
   return docRef.id;
 }
 
-export async function joinTrip(db: Firestore, tripId: string, memberData: { name: string, mobile: string, userId?: string }) {
+export async function joinTrip(db: Firestore, tripId: string, memberData: { name: string, email: string, uid: string, photoURL?: string | null }) {
   const membersRef = collection(db, 'trips', tripId, 'members');
-  const memberId = memberData.userId || doc(collection(db, 'temp')).id;
+  const memberId = memberData.uid;
   
-  await setDoc(doc(membersRef, memberId), {
-    ...memberData,
-    tripId,
-    role: 'member',
-    createdAt: serverTimestamp(),
-  });
+  // Check if member already exists in subcollection to avoid duplicates
+  const memberDocRef = doc(membersRef, memberId);
+  const memberSnap = await getDoc(memberDocRef);
+  
+  if (!memberSnap.exists()) {
+    await setDoc(memberDocRef, {
+      ...memberData,
+      tripId,
+      role: 'member',
+      joinedAt: serverTimestamp(),
+    });
 
-  const tripRef = doc(db, 'trips', tripId);
-  await updateDoc(tripRef, {
-    [`members.${memberId}`]: 'member'
-  });
+    const tripRef = doc(db, 'trips', tripId);
+    await updateDoc(tripRef, {
+      [`members.${memberId}`]: 'member'
+    });
+  }
   
   return memberId;
 }
@@ -145,14 +152,4 @@ export async function markTripComplete(db: Firestore, tripId: string) {
     status: 'Completed',
     updatedAt: serverTimestamp(),
   });
-}
-
-export function saveMemberSession(tripId: string, data: { name: string, mobile: string, memberId: string }) {
-  localStorage.setItem(`packtogether_session_${tripId}`, JSON.stringify(data));
-}
-
-export function getMemberSession(tripId: string) {
-  if (typeof window === 'undefined') return null;
-  const session = localStorage.getItem(`packtogether_session_${tripId}`);
-  return session ? JSON.parse(session) : null;
 }

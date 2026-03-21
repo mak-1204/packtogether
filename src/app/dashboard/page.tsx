@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -30,7 +31,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && firestore) {
-      // Fetch the user's profile from the corrected path
       getDoc(doc(firestore, 'users', user.uid)).then(snap => {
         if (snap.exists()) setUserProfile(snap.data());
       });
@@ -84,13 +84,10 @@ export default function DashboardPage() {
     }
   };
 
-  // Get first name prioritized from Firestore profile, then Google display name, then fallback
   const firstName = userProfile?.firstName || user.displayName?.split(" ")[0] || 'Traveler';
-  const displayMobile = userProfile?.mobile || '';
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-white pb-24 selection:bg-[#0D9488] selection:text-white">
-      {/* Top Bar */}
       <header className="border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-lg sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between px-4 mx-auto max-w-7xl">
           <Link href="/dashboard" className="flex items-center gap-2">
@@ -100,7 +97,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end mr-1">
               <span className="text-sm font-black text-white leading-tight">{firstName}</span>
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{displayMobile}</span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{user.email}</span>
             </div>
             <Avatar className="h-9 w-9 border border-white/10 shadow-lg">
               <AvatarImage src={user.photoURL || ''} />
