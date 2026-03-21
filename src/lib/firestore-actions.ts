@@ -6,13 +6,10 @@ import {
   setDoc, 
   updateDoc, 
   deleteDoc, 
-  query, 
-  where, 
-  getDocs,
-  getDoc,
   serverTimestamp,
   Firestore,
-  Timestamp
+  Timestamp,
+  getDoc
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
@@ -200,6 +197,27 @@ export function addSuggestion(db: Firestore, tripId: string, suggestion: any) {
   });
 }
 
+/**
+ * Adds a suggestion specifically for an itinerary item.
+ */
+export function addItemSuggestion(db: Firestore, tripId: string, itemId: string, suggestionData: any) {
+  const suggestionRef = doc(collection(db, 'trips', tripId, 'itineraryItems', itemId, 'suggestions'));
+  const data = {
+    ...suggestionData,
+    addedAt: serverTimestamp(),
+    aiRecommended: false,
+    aiReason: "",
+  };
+
+  setDoc(suggestionRef, data).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: suggestionRef.path,
+      operation: 'create',
+      requestResourceData: data,
+    } satisfies SecurityRuleContext));
+  });
+}
+
 export function markAiRecommended(db: Firestore, tripId: string, suggestionId: string, reason: string) {
   const suggestionRef = doc(db, 'trips', tripId, 'suggestions', suggestionId);
   updateDoc(suggestionRef, {
@@ -210,6 +228,23 @@ export function markAiRecommended(db: Firestore, tripId: string, suggestionId: s
       path: suggestionRef.path,
       operation: 'update',
       requestResourceData: { isAiRecommended: true, aiReason: reason },
+    } satisfies SecurityRuleContext));
+  });
+}
+
+/**
+ * Marks an itinerary item suggestion as AI recommended.
+ */
+export function markItemSuggestionAiPick(db: Firestore, tripId: string, itemId: string, suggestionId: string, reason: string) {
+  const suggestionRef = doc(db, 'trips', tripId, 'itineraryItems', itemId, 'suggestions', suggestionId);
+  updateDoc(suggestionRef, {
+    aiRecommended: true,
+    aiReason: reason
+  }).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: suggestionRef.path,
+      operation: 'update',
+      requestResourceData: { aiRecommended: true, aiReason: reason },
     } satisfies SecurityRuleContext));
   });
 }
