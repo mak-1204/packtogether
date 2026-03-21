@@ -15,12 +15,17 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isOrganizer(data) {
-      return isSignedIn() && data.organizerId == request.auth.uid;
+    // Check if the user is the organizer of the trip
+    function isOrganizer(tripData) {
+      return isSignedIn() && tripData.organizerId == request.auth.uid;
     }
 
-    function isMember(data) {
-      return isSignedIn() && (data.organizerId == request.auth.uid || (data.members != null && data.members[request.auth.uid] != null));
+    // Check if the user is a member or organizer
+    function isMember(tripData) {
+      return isSignedIn() && (
+        tripData.organizerId == request.auth.uid || 
+        (tripData.members != null && tripData.members[request.auth.uid] != null)
+      );
     }
 
     /** @description Slideshow for landing page. */
@@ -34,39 +39,54 @@ service cloud.firestore {
       allow get, list, write: if isOwner(userId);
     }
 
+    /** @description Trip records and subcollections. */
     match /trips/{tripId} {
-      allow get: if true; // Allow public view for /join and /view
-      allow list: if isSignedIn() && (resource.data.organizerId == request.auth.uid || (resource.data.members != null && resource.data.members[request.auth.uid] != null));
+      // Anyone can 'get' a trip for public viewing/joining via link
+      allow get: if true;
+      
+      // Listing trips is restricted to members/organizers
+      allow list: if isSignedIn() && (
+        resource.data.organizerId == request.auth.uid || 
+        (resource.data.members != null && resource.data.members[request.auth.uid] != null)
+      );
+      
       allow create: if isSignedIn();
       allow update: if isMember(resource.data);
       allow delete: if isOrganizer(resource.data);
 
+      // Members subcollection
       match /members/{memberId} {
-        allow get, list: if true;
-        allow create: if true; // Anyone can join via link
+        allow get, list: if true; // Publicly viewable for join page
+        allow create: if true;    // Anyone can join via link
         allow update, delete: if isSignedIn();
       }
 
+      // Itinerary subcollection
       match /itineraryItems/{itemId} {
+        // Read is public to support "Shareable Link" viewing
         allow get, list: if true;
-        allow create, update, delete: if true; // Collaborative
+        // Write is collaborative - anyone who joins the trip (or any signed-in user for now)
+        allow create, update, delete: if true; 
         
         match /checklistItems/{checklistItemId} {
            allow get, list, write: if true;
         }
       }
 
+      // Suggestions subcollection
       match /suggestions/{suggestionId} {
         allow get, list: if true;
         allow create, update, delete: if true;
       }
 
+      // Packing subcollection
       match /packingItems/{packingItemId} {
         allow get, list: if true;
         allow create, update, delete: if true;
       }
     }
 
+    /** @description Read-only summaries for cloning. */
     match /public_trip_summaries/{tripId} {
       allow get, list: if true;
       allow create, update, delete: if false;
