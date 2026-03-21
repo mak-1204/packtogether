@@ -1,46 +1,37 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Compass, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useSlideshow } from '@/hooks/useSlideshow';
 
 export default function Hero() {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  useEffect(() => {
-    if (PlaceHolderImages.length === 0) return;
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % PlaceHolderImages.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const currentImage = PlaceHolderImages[currentImageIndex];
+  const { currentSlide, slides, currentIndex, slidesLoading } = useSlideshow();
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
-      {/* Slideshow */}
-      <div className="absolute inset-0 transition-opacity duration-1000">
-        {PlaceHolderImages.map((image, index) => (
-          <div
-            key={image.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <Image
-              src={image.imageUrl}
-              alt={image.description}
-              fill
-              priority={index === 0}
-              className="object-cover animate-ken-burns"
-              data-ai-hint={image.imageHint}
-            />
-          </div>
-        ))}
-      </div>
+    <section className="relative h-screen w-full overflow-hidden bg-zinc-950">
+      {/* Slideshow Container */}
+      {!slidesLoading && slides.length > 0 && (
+        <div className="absolute inset-0">
+          {slides.map((slide, index) => (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <Image
+                src={slide.imageUrl}
+                alt={slide.location}
+                fill
+                priority={index === 0}
+                className={`object-cover ${index === currentIndex ? 'animate-ken-burns' : ''}`}
+                sizes="100vw"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Overlay Gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
@@ -72,11 +63,11 @@ export default function Hero() {
       </div>
 
       {/* Location Pill */}
-      {currentImage && (
+      {!slidesLoading && currentSlide && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
           <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white/90 text-sm font-medium animate-in fade-in zoom-in duration-500">
             <MapPin className="w-4 h-4 text-accent" />
-            <span>{currentImage.description}</span>
+            <span>{currentSlide.location}</span>
           </div>
         </div>
       )}
