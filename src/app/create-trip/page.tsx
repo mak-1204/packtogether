@@ -39,8 +39,16 @@ function CreateTripContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTripId, setCreatedTripId] = useState<string | null>(null);
 
+  // Debug logging
+  useEffect(() => {
+    if (!isUserLoading) {
+      console.log("Current user state:", user?.uid, user?.email);
+    }
+  }, [user, isUserLoading]);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
+      console.log("No user found, redirecting to auth...");
       router.push('/auth');
     }
   }, [user, isUserLoading, router]);
@@ -67,6 +75,15 @@ function CreateTripContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Guard — Auth check
+    if (!user || !firestore) {
+      console.error("No user or firestore found during submit");
+      toast({ variant: 'destructive', title: 'Session Error', description: 'You must be logged in to create a trip.' });
+      return;
+    }
+
+    // Guard — Validation
     if (!name || !destination || !startDate || !endDate || !budget) {
       toast({ variant: 'destructive', title: 'Missing fields', description: 'Please fill in all details.' });
       return;
@@ -74,20 +91,30 @@ function CreateTripContent() {
 
     setIsSubmitting(true);
     try {
-      const tripId = await createTrip(firestore!, {
+      const tripData = {
         name,
         destination,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate, // Pass Date objects directly, firestore-actions handles conversion
+        endDate,
         budgetPerHead: Number(budget),
         vibe,
         coverImageUrl: `https://picsum.photos/seed/${destination}/1920/1080`
-      }, user.uid);
+      };
+
+      console.log("Submitting trip with data:", tripData);
+      console.log("User UID:", user.uid);
+
+      const tripId = await createTrip(firestore, tripData, user.uid);
+      
       setCreatedTripId(tripId);
       toast({ title: 'Trip Created!', description: 'Your adventure starts now.' });
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not create trip.' });
+    } catch (error: any) {
+      console.error("Submit error details:", error);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Creation Failed', 
+        description: error.message || 'Could not create trip. Please check your connection and try again.' 
+      });
     } finally {
       setIsSubmitting(false);
     }

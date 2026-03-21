@@ -1,4 +1,3 @@
-
 'use client';
 
 import { 
@@ -14,22 +13,39 @@ import {
   getDoc,
   serverTimestamp,
   Firestore,
-  orderBy
+  orderBy,
+  Timestamp
 } from 'firebase/firestore';
 
 export async function createTrip(db: Firestore, tripData: any, userId: string) {
-  const tripRef = collection(db, 'trips');
-  const docRef = await addDoc(tripRef, {
-    ...tripData,
-    organizerId: userId,
-    members: { [userId]: 'organizer' },
-    status: 'Planning',
-    totalPlannedBudget: 0,
-    totalActualBudget: 0,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    console.log("Creating trip with data:", tripData, "userId:", userId);
+    
+    const tripRef = collection(db, 'trips');
+    const docRef = await addDoc(tripRef, {
+      ...tripData,
+      // Ensure dates are stored as Firestore Timestamps
+      startDate: tripData.startDate instanceof Date 
+        ? Timestamp.fromDate(tripData.startDate) 
+        : tripData.startDate,
+      endDate: tripData.endDate instanceof Date 
+        ? Timestamp.fromDate(tripData.endDate) 
+        : tripData.endDate,
+      organizerId: userId,
+      members: { [userId]: 'organizer' },
+      status: 'Planning',
+      totalPlannedBudget: 0,
+      totalActualBudget: 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    
+    console.log("Trip created successfully with ID:", docRef.id);
+    return docRef.id;
+  } catch (error: any) {
+    console.error("createTrip error — code:", error.code, "message:", error.message);
+    throw error;
+  }
 }
 
 export async function joinTrip(db: Firestore, tripId: string, memberData: { name: string, email: string, uid: string, photoURL?: string | null }) {
