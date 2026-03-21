@@ -1,6 +1,6 @@
 'use client';
 /**
- * @fileOverview Service for interacting with the slideshow collection in Firestore.
+ * @fileOverview Service for interacting with the slideshow collection in Firestore with detailed logging.
  */
 
 import { initializeFirebase } from "@/firebase";
@@ -21,19 +21,27 @@ export interface SlideshowSlide {
 export async function getSlideshowSlides(): Promise<SlideshowSlide[]> {
   const { firestore } = initializeFirebase();
   try {
+    console.log("Fetching slideshow from Firestore...");
     const q = query(
       collection(firestore, "slideshow"),
       where("active", "==", true),
       orderBy("order", "asc")
     );
     const snapshot = await getDocs(q);
-    console.log("Slideshow slides fetched:", snapshot.docs.length);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as SlideshowSlide[];
-  } catch (error) {
-    console.error("Failed to fetch slideshow from Firestore:", error);
+    console.log("Slideshow docs count:", snapshot.docs.length);
+    
+    const slides = snapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log("Slide doc found:", doc.id, data);
+      return {
+        id: doc.id,
+        ...data
+      } as SlideshowSlide;
+    });
+
+    return slides;
+  } catch (error: any) {
+    console.error("Slideshow fetch error:", error.code, error.message);
     return [];
   }
 }

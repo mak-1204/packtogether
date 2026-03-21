@@ -7,6 +7,16 @@ import { useSlideshow } from '@/hooks/useSlideshow';
 export default function Hero() {
   const { currentSlide, transitioning, slidesLoading } = useSlideshow();
 
+  // Log current slide state for debugging
+  if (typeof window !== 'undefined') {
+    console.log("Hero component state:", { 
+      hasSlide: !!currentSlide, 
+      imageUrl: currentSlide?.imageUrl,
+      transitioning, 
+      slidesLoading 
+    });
+  }
+
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#0F172A]">
       {/* Background image layer */}

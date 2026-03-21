@@ -1,6 +1,6 @@
 'use client';
 /**
- * @fileOverview Custom hook for managing the landing page background slideshow state from Firestore.
+ * @fileOverview Custom hook for managing the landing page background slideshow state from Firestore with debugging.
  */
 
 import { useState, useEffect } from 'react';
@@ -17,20 +17,30 @@ export function useSlideshow() {
   useEffect(() => {
     async function fetchSlides() {
       const data = await getSlideshowSlides();
+      console.log("useSlideshow received:", data.length, "slides");
+      
       if (data.length > 0) {
         // Preload first image before starting
         const img = new Image();
         img.src = data[0].imageUrl;
         img.onload = () => {
+          console.log("First image preloaded:", data[0].imageUrl);
           setSlides(data);
           setSlidesLoading(false);
         };
+        img.onerror = (e) => {
+          console.error("Failed to preload first image:", data[0].imageUrl, e);
+          setSlides(data);
+          setSlidesLoading(false);
+        };
+        
         // Preload remaining images in background
         data.slice(1).forEach(slide => {
           const i = new Image();
           i.src = slide.imageUrl;
         });
       } else {
+        console.warn("No slides found in Firestore.");
         setSlidesLoading(false);
       }
     }
