@@ -84,6 +84,7 @@ export default function DashboardPage() {
   };
 
   const displayName = userProfile?.firstName || user.displayName || 'Traveler';
+  const displayMobile = userProfile?.mobile || '';
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-white pb-24 selection:bg-[#0D9488] selection:text-white">
@@ -96,16 +97,16 @@ export default function DashboardPage() {
           </Link>
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end mr-1">
-              <span className="text-xs font-bold text-zinc-400">Voyager</span>
-              <span className="text-sm font-medium">{displayName}</span>
+              <span className="text-sm font-black text-white leading-tight">{displayName}</span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{displayMobile}</span>
             </div>
-            <Avatar className="h-9 w-9 border border-white/10">
+            <Avatar className="h-9 w-9 border border-white/10 shadow-lg">
               <AvatarImage src={user.photoURL || ''} />
-              <AvatarFallback className="bg-[#0D9488] text-white">
+              <AvatarFallback className="bg-[#0D9488] text-white font-bold">
                 {displayName[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-400 hover:text-white">
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
@@ -154,7 +155,7 @@ export default function DashboardPage() {
                     <p className="text-zinc-300 text-sm font-medium opacity-80">{trip.name}</p>
                   </div>
                   <div className="absolute top-4 right-6">
-                    <Badge className="bg-[#0D9488] text-white font-black px-3 py-1 border-none">
+                    <Badge className="bg-[#0D9488] text-white font-black px-3 py-1 border-none shadow-lg">
                       {trip.status}
                     </Badge>
                   </div>
