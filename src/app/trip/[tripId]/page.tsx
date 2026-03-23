@@ -281,8 +281,11 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
                     <span className="text-2xl font-black">Day {dayNum}</span>
                     <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">— {format(dayDate, 'EEE dd MMM')}</span>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 items-center">
                     <span className="text-[10px] font-black uppercase tracking-widest text-teal-500">₹{dayActual.toLocaleString()} / ₹{dayPlanned.toLocaleString()}</span>
+                    <Badge variant="outline" className="text-[9px] font-black border-white/10 text-zinc-400 h-5 px-1.5 rounded-md">
+                      {dayItems.length} {dayItems.length === 1 ? 'ITEM' : 'ITEMS'}
+                    </Badge>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -527,7 +530,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-10 w-10 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                className="h-10 w-10 text-zinc-500 hover:text-teal-500 hover:bg-teal-500/10 rounded-xl transition-all"
                 onClick={() => deleteItineraryItem(firestore, tripId, item.id)}
               >
                 <Trash2 className="w-4 h-4" />
