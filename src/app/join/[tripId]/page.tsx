@@ -43,7 +43,7 @@ export default function JoinTripPage() {
         uid: user.uid,
         photoURL: user.photoURL
       });
-      toast({ title: 'Welcome aboard!', description: `You've joined the trip!` });
+      sessionStorage.setItem("justJoined", tripId);
       router.push(`/trip/${tripId}`);
     } catch (error) {
       console.error("Join error:", error);
@@ -54,8 +54,8 @@ export default function JoinTripPage() {
 
   useEffect(() => {
     if (user && trip && !isJoining) {
-      // Check if already a member using optional chaining to prevent crash if members map is missing
       if (trip.members && trip.members[user.uid]) {
+        sessionStorage.setItem("justJoined", tripId);
         router.push(`/trip/${tripId}`);
       } else {
         handleJoin();
@@ -65,6 +65,7 @@ export default function JoinTripPage() {
 
   const handleGoogleSignIn = async () => {
     try {
+      sessionStorage.setItem("pendingJoinTripId", tripId);
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (error: any) {
@@ -72,16 +73,26 @@ export default function JoinTripPage() {
     }
   };
 
-  if (isTripLoading || isUserLoading || isJoining) {
+  if (isTripLoading || isUserLoading || isJoining || (user && trip)) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center text-teal-500 gap-4">
-        <Loader2 className="animate-spin w-12 h-12" />
-        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Preparing your boarding pass...</span>
+      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center gap-6">
+        <div className="w-16 h-16 rounded-full border-4 border-slate-700 border-t-teal-500 animate-spin" />
+        
+        {trip && (
+          <div className="text-center">
+            <p className="text-white text-xl font-bold">{trip.destination}</p>
+            <p className="text-slate-400 text-sm mt-1">{trip.name}</p>
+          </div>
+        )}
+
+        <p className="text-teal-400 text-xs tracking-widest uppercase animate-pulse font-black">
+          Preparing your boarding pass...
+        </p>
       </div>
     );
   }
 
-  if (!trip) return (
+  if (!trip && !isTripLoading) return (
     <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center text-white p-6">
       <Compass className="w-16 h-16 text-teal-500 mb-6" />
       <h1 className="text-3xl font-black mb-2">Trip not found</h1>
@@ -152,7 +163,11 @@ export default function JoinTripPage() {
               <div className="relative flex justify-center text-[10px] uppercase font-black text-zinc-500 bg-[#0F172A] px-2">or</div>
             </div>
 
-            <Link href={`/join/${tripId}/email`} className="block w-full">
+            <Link 
+              href={`/join/${tripId}/email`} 
+              className="block w-full"
+              onClick={() => sessionStorage.setItem("pendingJoinTripId", tripId)}
+            >
               <Button variant="outline" className="w-full h-16 border-white/10 hover:border-teal-500 bg-transparent text-white font-black rounded-2xl gap-3 text-lg">
                 <Mail className="w-5 h-5" /> Continue with Email
               </Button>

@@ -40,6 +40,16 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/auth');
+      return;
+    }
+
+    if (user) {
+      const pendingJoin = sessionStorage.getItem("pendingJoinTripId");
+      if (pendingJoin) {
+        sessionStorage.removeItem("pendingJoinTripId");
+        router.push(`/join/${pendingJoin}`);
+        return;
+      }
     }
   }, [user, isUserLoading, router]);
 
@@ -65,7 +75,7 @@ export default function DashboardPage() {
 
   const { data: trips, isLoading: isTripsLoading } = useCollection(tripsQuery);
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || !user || sessionStorage.getItem("pendingJoinTripId")) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]">
         <Loader2 className="animate-spin" />

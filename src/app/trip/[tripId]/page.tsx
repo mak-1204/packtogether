@@ -129,6 +129,19 @@ export default function TripDetailsPage() {
     }
   }, [isTripLoading, isUserLoading, trip, isOrganizer, isMember, tripId, router]);
 
+  useEffect(() => {
+    if (tripId) {
+      const justJoined = sessionStorage.getItem("justJoined");
+      if (justJoined === tripId) {
+        sessionStorage.removeItem("justJoined");
+        toast({
+          title: "Welcome aboard! 🎉",
+          description: "You've joined the trip successfully.",
+        });
+      }
+    }
+  }, [tripId]);
+
   if (isTripLoading || isUserLoading) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-teal-500"><Loader2 className="animate-spin" /></div>;
   if (!trip || !firestore) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white font-bold">Trip not found.</div>;
 

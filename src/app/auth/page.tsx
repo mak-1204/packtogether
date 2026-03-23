@@ -25,7 +25,12 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      const pendingJoin = sessionStorage.getItem("pendingJoinTripId");
+      if (pendingJoin) {
+        router.push(`/join/${pendingJoin}`);
+      } else {
+        router.push('/dashboard');
+      }
     }
   }, [user, router]);
 
@@ -35,7 +40,6 @@ export default function AuthPage() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast({ title: 'Welcome!' });
-      router.push('/dashboard');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Login Failed', description: error.message });
     } finally {
@@ -55,7 +59,6 @@ export default function AuthPage() {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: 'Welcome back!' });
       }
-      router.push('/dashboard');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Auth Failed', description: error.message });
     } finally {
