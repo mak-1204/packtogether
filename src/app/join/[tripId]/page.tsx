@@ -16,7 +16,8 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { toDate } from '@/lib/utils';
 
 export default function JoinTripPage() {
-  const { tripId } = useParams() as { tripId: string };
+  const params = useParams();
+  const tripId = params?.tripId as string;
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -32,6 +33,8 @@ export default function JoinTripPage() {
 
   const handleJoin = async () => {
     if (!user || !firestore || !tripId) return;
+    if (isJoining) return;
+    
     setIsJoining(true);
     try {
       await joinTrip(firestore, tripId, {
@@ -40,9 +43,10 @@ export default function JoinTripPage() {
         uid: user.uid,
         photoURL: user.photoURL
       });
-      toast({ title: 'Welcome aboard!', description: `You've joined ${trip?.destination}` });
+      toast({ title: 'Welcome aboard!', description: `You've joined the trip!` });
       router.push(`/trip/${tripId}`);
     } catch (error) {
+      console.error("Join error:", error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not join trip.' });
       setIsJoining(false);
     }
@@ -50,7 +54,7 @@ export default function JoinTripPage() {
 
   useEffect(() => {
     if (user && trip && !isJoining) {
-      // Check if already a member to avoid redundant join toast
+      // Check if already a member using optional chaining to prevent crash if members map is missing
       if (trip.members && trip.members[user.uid]) {
         router.push(`/trip/${tripId}`);
       } else {
@@ -98,7 +102,7 @@ export default function JoinTripPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent" />
           <div className="absolute bottom-6 left-8 right-8">
-            <Badge className="mb-3 bg-teal-500 text-white font-black px-4 py-1.5 rounded-lg shadow-xl">{trip.vibe}</Badge>
+            <Badge className="mb-3 bg-teal-500 text-white font-black px-4 py-1.5 rounded-lg shadow-xl">{trip.vibe || 'Trip'}</Badge>
             <h1 className="text-4xl font-black text-white tracking-tight leading-tight">{trip.destination}</h1>
             <p className="text-zinc-300 font-medium opacity-80 mt-1">{trip.name}</p>
           </div>
@@ -125,7 +129,7 @@ export default function JoinTripPage() {
               <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-black uppercase tracking-widest">
                 <Wallet className="w-3 h-3 text-teal-500" /> Budget
               </div>
-              <span className="text-xs font-bold text-white">₹{trip.budgetPerHead?.toLocaleString()} pp</span>
+              <span className="text-xs font-bold text-white">₹{trip.budgetPerHead?.toLocaleString() || '0'} pp</span>
             </div>
           </div>
 

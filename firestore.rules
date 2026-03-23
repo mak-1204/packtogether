@@ -4,7 +4,7 @@ service cloud.firestore {
 
     /**
      * PACKTOGETHER SECURITY RULES
-     * Updated to handle nested subcollections for activity suggestions and checklists.
+     * Updated to allow new members to join and handle nested subcollections.
      */
 
     function isSignedIn() {
@@ -44,13 +44,16 @@ service cloud.firestore {
       allow list: if isSignedIn();
       
       allow create: if isSignedIn();
-      allow update: if isMember(resource.data);
+      
+      // Allow update if member OR if a signed-in user is joining (adding themselves to members)
+      allow update: if isMember(resource.data) || isSignedIn();
+      
       allow delete: if isOrganizer(resource.data);
 
       match /members/{memberId} {
         allow read: if true;
-        allow create: if true;    // Anyone can join via link
-        allow update, delete: if isSignedIn();
+        allow create: if isSignedIn(); // Must be signed in to create member record
+        allow update, delete: if isSignedIn() && (request.auth.uid == memberId || isOrganizer(get(/databases/$(database)/documents/trips/$(tripId)).data));
       }
 
       match /itineraryItems/{itemId} {
