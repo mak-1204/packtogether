@@ -52,7 +52,7 @@ import {
 import { 
   CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
   Plus, MapPin, CheckCircle2, Trash2, 
-  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon
+  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -141,7 +141,15 @@ export default function TripDetailsPage() {
     <div className="min-h-screen bg-[#0F172A] pb-24 text-white selection:bg-teal-500/30">
       <header className="sticky top-0 z-50 bg-[#0F172A]/80 backdrop-blur-xl border-b border-white/5 p-4 shadow-2xl">
         <div className="container max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl shrink-0"
+              onClick={() => router.push('/dashboard')}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             <div className="flex flex-col min-w-0">
               <h1 className="font-black text-xl leading-tight truncate tracking-tighter text-white">{trip.destination}</h1>
               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest truncate">{trip.name}</span>
@@ -709,7 +717,7 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
           )}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Extra Details</Label>
-            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl min-h-[100px] focus:border-teal-500/50" placeholder="Booking references, addresses, etc." value={notes} onChange={setNotes} />
+            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl min-h-[100px] focus:border-teal-500/50" placeholder="Booking references, addresses, etc." value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <Button className="w-full h-16 bg-teal-500 hover:bg-teal-600 font-black rounded-2xl text-lg shadow-2xl shadow-teal-500/30 transition-all active:scale-95" onClick={handleAdd}>Add to Plan</Button>
         </div>
@@ -728,7 +736,7 @@ function ChecklistTab({ firestore, trip, itinerary, isOrganizer }: { firestore: 
     <div className="space-y-8 pb-32">
       {hasUrgentItems && tripStartsSoon && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-5 rounded-[2rem] flex items-center gap-4 animate-pulse">
-          <AlertTriangle className="w-8 h-8 shrink-0" />
+          <Package className="w-8 h-8 shrink-0" />
           <p className="text-sm font-black uppercase tracking-tight">Trip starts soon! Some prep items need attention.</p>
         </div>
       )}
@@ -897,7 +905,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: { firesto
           </div>
           <div className="space-y-2">
             <Label className="font-black text-teal-500 uppercase tracking-widest text-[10px] ml-1">Notes</Label>
-            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl h-24 focus:border-teal-500/50" placeholder="Why is this awesome?" value={notes} onChange={setNotes} />
+            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl h-24 focus:border-teal-500/50" placeholder="Why is this awesome?" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <Button className="w-full h-16 bg-teal-500 hover:bg-teal-600 font-black rounded-2xl text-lg shadow-2xl shadow-teal-500/30 transition-all active:scale-95" onClick={handleAdd}>Share with Gang</Button>
         </CardContent>
