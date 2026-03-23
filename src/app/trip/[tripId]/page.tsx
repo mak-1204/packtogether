@@ -26,6 +26,7 @@ import {
   resetAllChecklists
 } from '@/lib/firestore-actions';
 import { aiTripSuggestionRecommendation } from '@/ai/flows/ai-trip-suggestion-recommendation';
+import { exportTripToExcel } from "@/lib/exportToExcel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -216,7 +217,7 @@ export default function TripDetailsPage() {
       <main className="container max-w-lg mx-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="itinerary" className="mt-0 outline-none pb-24 px-4 pt-6">
-            <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isAdmin={isAdmin} isMember={isMember} />
+            <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isAdmin={isAdmin} isMember={isMember} isOrganizer={isOrganizer} members={members || []} />
           </TabsContent>
           <TabsContent value="checklist" className="mt-0 outline-none pb-24 px-4 pt-6">
             <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isMember={isMember} isOrganizer={isOrganizer} />
@@ -259,7 +260,7 @@ export default function TripDetailsPage() {
   );
 }
 
-function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
+function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember, isOrganizer, members }: any) {
   const start = toDate(trip.startDate);
   const end = toDate(trip.endDate);
   
@@ -270,8 +271,23 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   const days = Array.from({ length: diffDays }, (_, i) => i + 1);
 
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await exportTripToExcel(trip, itinerary || [], members || []);
+      toast({ title: "Exported successfully! 📊" });
+    } catch (err) {
+      console.error("Export error:", err);
+      toast({ title: "Export failed", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Itinerary</h2>
         {isMember && <AddItineraryDialog firestore={firestore} tripId={trip.id} days={days} />}
@@ -351,6 +367,23 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
           );
         })}
       </Accordion>
+
+      {isOrganizer && (
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="w-full flex items-center justify-center gap-3 border border-teal-500 text-teal-400 hover:bg-teal-500/10 disabled:opacity-50 font-semibold py-3 rounded-2xl transition mx-auto mt-8 mb-4 min-h-[56px]"
+        >
+          {exporting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>📊 Export Trip as Excel</>
+          )}
+        </button>
+      )}
     </div>
   );
 }
@@ -370,7 +403,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
   return (
     <div className="flex items-center gap-2 py-3 border-b border-slate-800 last:border-none group">
       <div className="shrink-0 w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500 transition-transform group-hover:scale-110">
-        {item.category === 'transit' ? <Car className="w-5 h-5" /> :
+        {item.category === 'local transit' ? <Car className="w-5 h-5" /> :
          item.category === 'journey' ? <Plane className="w-5 h-5" /> :
          item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
          item.category === 'stay' ? <MapPin className="w-5 h-5" /> :
@@ -424,7 +457,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
     updateItineraryItem(firestore, tripId, item.id, {
       name,
       category,
-      mode: (category === 'journey' || category === 'transit') ? mode : undefined,
+      mode: (category === 'journey' || category === 'local transit') ? mode : undefined,
       dayNumber: Number(day),
       timeSlot: slot,
       plannedBudget: Number(budget),
@@ -434,7 +467,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
     toast({ title: 'Activity Updated!' });
   };
 
-  const showMode = category === 'journey' || category === 'transit';
+  const showMode = category === 'journey' || category === 'local transit';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -457,7 +490,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Category</Label>
               <Select value={category} onValueChange={(val) => {
                 setCategory(val);
-                if (val !== 'journey' && val !== 'transit') setMode(undefined);
+                if (val !== 'journey' && val !== 'local transit') setMode(undefined);
               }}>
                 <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
                   <SelectValue />
@@ -465,7 +498,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
                   <SelectItem value="stay">🏨 Stay</SelectItem>
                   <SelectItem value="journey">✈️ Journey</SelectItem>
-                  <SelectItem value="transit">🚗 Local Transit</SelectItem>
+                  <SelectItem value="local transit">🚗 Local Transit</SelectItem>
                   <SelectItem value="food">🍱 Food</SelectItem>
                   <SelectItem value="activity">🎭 Activity</SelectItem>
                   <SelectItem value="other">✨ Other</SelectItem>
@@ -971,7 +1004,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
     addItineraryItem(firestore, tripId, {
       name,
       category,
-      mode: (category === 'journey' || category === 'transit') ? mode : undefined,
+      mode: (category === 'journey' || category === 'local transit') ? mode : undefined,
       dayNumber: Number(day),
       timeSlot: slot,
       plannedBudget: Number(budget),
@@ -985,7 +1018,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
     setMode(undefined);
   };
 
-  const showMode = category === 'journey' || category === 'transit';
+  const showMode = category === 'journey' || category === 'local transit';
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -1010,7 +1043,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Category</Label>
               <Select value={category} onValueChange={(val) => {
                 setCategory(val);
-                if (val !== 'journey' && val !== 'transit') setMode(undefined);
+                if (val !== 'journey' && val !== 'local transit') setMode(undefined);
               }}>
                 <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500">
                   <SelectValue />
@@ -1018,7 +1051,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
                   <SelectItem value="stay">🏨 Stay</SelectItem>
                   <SelectItem value="journey">✈️ Journey</SelectItem>
-                  <SelectItem value="transit">🚗 Local Transit</SelectItem>
+                  <SelectItem value="local transit">🚗 Local Transit</SelectItem>
                   <SelectItem value="food">🍱 Food</SelectItem>
                   <SelectItem value="activity">🎭 Activity</SelectItem>
                   <SelectItem value="other">✨ Other</SelectItem>
