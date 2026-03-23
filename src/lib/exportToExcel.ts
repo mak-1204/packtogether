@@ -1,11 +1,18 @@
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+/**
+ * @fileOverview Utility to export trip data to an Excel file.
+ * Uses dynamic imports to ensure compatibility with Next.js SSR and the browser environment.
+ */
 
 export async function exportTripToExcel(
   trip: any,
   itineraryItems: any[],
   members: any[]
 ) {
+  // Dynamically import libraries to avoid SSR issues
+  const XLSX = await import("xlsx");
+  const fileSaver = await import("file-saver");
+  const saveAs = fileSaver.saveAs || (fileSaver as any).default;
+
   const workbook = XLSX.utils.book_new();
 
   // ─────────────────────────────
@@ -114,7 +121,7 @@ export async function exportTripToExcel(
   // ─────────────────────────────
   const categories = [
     "stay", "food", "local transit", "activity",
-    "train", "flight", "bus", "roadtrip", "cab"
+    "journey", "train", "flight", "bus", "roadtrip", "cab"
   ];
 
   const categoryRows = categories
