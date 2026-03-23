@@ -138,6 +138,11 @@ export default function DashboardPage() {
 
   const firstName = userProfile?.firstName || user.displayName?.split(" ")[0] || 'Traveler';
 
+  const canDeleteTrip = (trip: any) => {
+    if (!user) return false;
+    return trip.organizerId === user.uid || (trip.members && trip.members[user.uid] === 'admin');
+  };
+
   return (
     <div className="min-h-screen bg-[#0F172A] text-white pb-24 selection:bg-[#0D9488] selection:text-white">
       <header className="border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-lg sticky top-0 z-50">
@@ -255,7 +260,7 @@ export default function DashboardPage() {
                       >
                         <Copy className="w-5 h-5 text-zinc-400" />
                       </Button>
-                      {trip.organizerId === user.uid && (
+                      {canDeleteTrip(trip) && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button 

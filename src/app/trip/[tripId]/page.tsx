@@ -176,7 +176,7 @@ export default function TripDetailsPage() {
               <h1 className="font-black text-xl leading-tight truncate tracking-tighter text-white">{trip.destination}</h1>
               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest truncate">{trip.name}</span>
             </div>
-            {isAdmin && (
+            {isMember && (
               <EditTripDialog firestore={firestore} trip={trip} />
             )}
           </div>
@@ -200,16 +200,16 @@ export default function TripDetailsPage() {
             <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isAdmin={isAdmin} isMember={isMember} />
           </TabsContent>
           <TabsContent value="checklist" className="mt-0 outline-none">
-            <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isAdmin={isAdmin} />
+            <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isMember={isMember} />
           </TabsContent>
           <TabsContent value="suggestions" className="mt-0 outline-none">
-            <SuggestionsTab firestore={firestore} trip={trip} suggestions={suggestions} isAdmin={isAdmin} />
+            <SuggestionsTab firestore={firestore} trip={trip} suggestions={suggestions} isMember={isMember} isAdmin={isAdmin} />
           </TabsContent>
           <TabsContent value="packing" className="mt-0 outline-none">
-            <PackingTab firestore={firestore} trip={trip} packing={packing} isAdmin={isAdmin} />
+            <PackingTab firestore={firestore} trip={trip} packing={packing} isMember={isMember} />
           </TabsContent>
           <TabsContent value="summary" className="mt-0 outline-none">
-            <SummaryTab firestore={firestore} trip={trip} itinerary={itinerary} members={members} isAdmin={isAdmin} isOrganizer={isOrganizer} />
+            <SummaryTab firestore={firestore} trip={trip} itinerary={itinerary} members={members} isAdmin={isAdmin} isMember={isMember} isOrganizer={isOrganizer} />
           </TabsContent>
 
           <TabsList className="fixed bottom-0 left-0 right-0 h-20 bg-[#0F172A]/90 backdrop-blur-2xl border-t border-white/5 rounded-none grid grid-cols-5 z-50 p-0 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
@@ -302,7 +302,7 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
                           </div>
                           <div className="space-y-4">
                             {slotItems.map((item: any) => (
-                              <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isAdmin={isAdmin} />
+                              <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isMember={isMember} isAdmin={isAdmin} />
                             ))}
                           </div>
                         </div>
@@ -319,7 +319,7 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
   );
 }
 
-function ItineraryItemCard({ firestore, tripId, item, isAdmin }: any) {
+function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin }: any) {
   const [actual, setActual] = useState(item.actualBudget?.toString() || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newLink, setNewLink] = useState('');
@@ -404,7 +404,7 @@ function ItineraryItemCard({ firestore, tripId, item, isAdmin }: any) {
               onBlur={handleUpdateBudget}
             />
           </div>
-          {isAdmin && (
+          {isMember && (
             <Button 
               variant="ghost" 
               size="icon" 
@@ -492,7 +492,7 @@ function ItineraryItemCard({ firestore, tripId, item, isAdmin }: any) {
   );
 }
 
-function ChecklistTab({ firestore, trip, itinerary, isAdmin }: any) {
+function ChecklistTab({ firestore, trip, itinerary, isMember }: any) {
   const travelItems = itinerary?.filter((i: any) => i.category === 'transport' || i.category === 'travel') || [];
 
   return (
@@ -518,7 +518,7 @@ function ChecklistTab({ firestore, trip, itinerary, isAdmin }: any) {
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Day {item.dayNumber}</p>
                 </div>
               </div>
-              <ChecklistItemsList firestore={firestore} tripId={trip.id} itemId={item.id} isAdmin={isAdmin} />
+              <ChecklistItemsList firestore={firestore} tripId={trip.id} itemId={item.id} isMember={isMember} />
             </div>
           ))}
         </div>
@@ -527,7 +527,7 @@ function ChecklistTab({ firestore, trip, itinerary, isAdmin }: any) {
   );
 }
 
-function ChecklistItemsList({ firestore, tripId, itemId, isAdmin }: any) {
+function ChecklistItemsList({ firestore, tripId, itemId, isMember }: any) {
   const checklistRef = useMemoFirebase(() => {
     return query(collection(firestore, 'trips', tripId, 'itineraryItems', itemId, 'checklistItems'), orderBy('order'));
   }, [firestore, tripId, itemId]);
@@ -535,7 +535,7 @@ function ChecklistItemsList({ firestore, tripId, itemId, isAdmin }: any) {
   const { data: checklist } = useCollection(checklistRef);
 
   const cycleStatus = (id: string, current: string) => {
-    if (!isAdmin) return;
+    if (!isMember) return;
     const next = current === 'red' ? 'yellow' : current === 'yellow' ? 'green' : 'red';
     updateChecklistItemStatus(firestore, tripId, itemId, id, next);
   };
@@ -552,7 +552,7 @@ function ChecklistItemsList({ firestore, tripId, itemId, isAdmin }: any) {
                 item.status === 'green' ? "bg-teal-500 border-teal-500" :
                 item.status === 'yellow' ? "bg-amber-500 border-amber-500" :
                 "bg-red-500 border-red-500",
-                isAdmin ? "cursor-pointer hover:scale-110" : "cursor-default"
+                isMember ? "cursor-pointer hover:scale-110" : "cursor-default"
               )}
             >
               {item.status === 'green' && <CheckCircle2 className="w-3 h-3 text-black mx-auto" />}
@@ -578,7 +578,7 @@ function ChecklistItemsList({ firestore, tripId, itemId, isAdmin }: any) {
   );
 }
 
-function SuggestionsTab({ firestore, trip, suggestions, isAdmin }: any) {
+function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any) {
   const [link, setLink] = useState('');
   const [notes, setNotes] = useState('');
   const { user } = useUser();
@@ -599,34 +599,36 @@ function SuggestionsTab({ firestore, trip, suggestions, isAdmin }: any) {
     <div className="space-y-6">
       <h2 className="text-3xl font-black tracking-tight">Idea Pool</h2>
       
-      <Card className="bg-white/5 border-white/5 p-6 rounded-[2.5rem] shadow-2xl backdrop-blur-xl">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest ml-1">Paste Link</Label>
-            <Input 
-              className="bg-black/20 border-white/10 h-12 rounded-2xl text-white" 
-              placeholder="e.g. Airbnb or TripAdvisor link" 
-              value={link}
-              onChange={e => setLink(e.target.value)}
-            />
+      {isMember && (
+        <Card className="bg-white/5 border-white/5 p-6 rounded-[2.5rem] shadow-2xl backdrop-blur-xl">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest ml-1">Paste Link</Label>
+              <Input 
+                className="bg-black/20 border-white/10 h-12 rounded-2xl text-white" 
+                placeholder="e.g. Airbnb or TripAdvisor link" 
+                value={link}
+                onChange={e => setLink(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest ml-1">Notes</Label>
+              <Textarea 
+                className="bg-black/20 border-white/10 rounded-2xl text-white min-h-[80px]" 
+                placeholder="Why this?" 
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+              />
+            </div>
+            <Button 
+              className="w-full h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg gap-2 shadow-xl shadow-teal-500/20"
+              onClick={handleAdd}
+            >
+              <Plus className="w-5 h-5" /> Add Idea
+            </Button>
           </div>
-          <div className="space-y-2">
-            <Label className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest ml-1">Notes</Label>
-            <Textarea 
-              className="bg-black/20 border-white/10 rounded-2xl text-white min-h-[80px]" 
-              placeholder="Why this?" 
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-            />
-          </div>
-          <Button 
-            className="w-full h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg gap-2 shadow-xl shadow-teal-500/20"
-            onClick={handleAdd}
-          >
-            <Plus className="w-5 h-5" /> Add Idea
-          </Button>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <div className="space-y-6">
         {suggestions?.map((s: any) => (
@@ -661,7 +663,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isAdmin }: any) {
   );
 }
 
-function PackingTab({ firestore, trip, packing, isAdmin }: any) {
+function PackingTab({ firestore, trip, packing, isMember }: any) {
   const [newItem, setNewItem] = useState('');
 
   const handleAdd = () => {
@@ -689,18 +691,20 @@ function PackingTab({ firestore, trip, packing, isAdmin }: any) {
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Input 
-          className="bg-white/5 border-white/5 h-12 rounded-2xl text-white font-bold" 
-          placeholder="Add something to pack..." 
-          value={newItem}
-          onChange={e => setNewItem(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAdd()}
-        />
-        <Button className="h-12 w-12 bg-teal-500 hover:bg-teal-600 rounded-2xl shrink-0" onClick={handleAdd}>
-          <Plus className="w-6 h-6" />
-        </Button>
-      </div>
+      {isMember && (
+        <div className="flex gap-3">
+          <Input 
+            className="bg-white/5 border-white/5 h-12 rounded-2xl text-white font-bold" 
+            placeholder="Add something to pack..." 
+            value={newItem}
+            onChange={e => setNewItem(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
+          <Button className="h-12 w-12 bg-teal-500 hover:bg-teal-600 rounded-2xl shrink-0" onClick={handleAdd}>
+            <Plus className="w-6 h-6" />
+          </Button>
+        </div>
+      )}
 
       <div className="space-y-3">
         {packing?.map((item: any) => (
@@ -712,6 +716,7 @@ function PackingTab({ firestore, trip, packing, isAdmin }: any) {
                   "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
                   item.isPacked ? "bg-teal-500 border-teal-500" : "bg-black/20 border-white/10 hover:border-teal-500"
                 )}
+                disabled={!isMember}
               >
                 {item.isPacked && <CheckCircle2 className="w-4 h-4 text-black" />}
               </button>
@@ -722,14 +727,16 @@ function PackingTab({ firestore, trip, packing, isAdmin }: any) {
                 {item.name}
               </span>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-              onClick={() => deletePackingItem(firestore, trip.id, item.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            {isMember && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                onClick={() => deletePackingItem(firestore, trip.id, item.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         ))}
       </div>
@@ -737,7 +744,7 @@ function PackingTab({ firestore, trip, packing, isAdmin }: any) {
   );
 }
 
-function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isOrganizer }: any) {
+function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, isOrganizer }: any) {
   const totalPlanned = itinerary?.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0;
   const totalActual = itinerary?.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0;
 
@@ -868,14 +875,16 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isOrganizer 
         </Card>
       </div>
 
-      <Button 
-        className="w-full h-16 bg-white/5 hover:bg-white/10 text-zinc-400 font-black rounded-3xl gap-3 text-sm uppercase tracking-widest border border-white/5"
-        onClick={handleShare}
-      >
-        <Share2 className="w-5 h-5" /> Share Invite Link
-      </Button>
+      {isMember && (
+        <Button 
+          className="w-full h-16 bg-white/5 hover:bg-white/10 text-zinc-400 font-black rounded-3xl gap-3 text-sm uppercase tracking-widest border border-white/5"
+          onClick={handleShare}
+        >
+          <Share2 className="w-5 h-5" /> Share Invite Link
+        </Button>
+      )}
 
-      {isAdmin && trip.status !== 'Completed' && (
+      {isMember && trip.status !== 'Completed' && (
         <Button 
           className="w-full h-16 bg-teal-500 hover:bg-teal-600 text-black font-black rounded-3xl gap-3 text-lg shadow-xl shadow-teal-500/20"
           onClick={() => markTripComplete(firestore, trip.id)}
