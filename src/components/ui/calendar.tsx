@@ -15,21 +15,10 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  // Use startOfToday logic to avoid hydration mismatches
-  const [today, setToday] = React.useState<Date | undefined>(undefined);
-
-  React.useEffect(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    setToday(d);
-  }, []);
-
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
-      // Disable all dates before today
-      disabled={today ? { before: today } : undefined}
       classNames={{
         months: "flex flex-col",
         month: "space-y-4",
@@ -38,11 +27,11 @@ function Calendar({
         nav: "flex items-center",
         button_previous: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 bg-transparent p-0 text-slate-400 hover:text-white transition absolute left-1 z-10 flex items-center justify-center"
+          "h-9 w-9 bg-transparent p-0 text-slate-400 hover:text-white transition absolute left-1 z-20 flex items-center justify-center"
         ),
         button_next: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 bg-transparent p-0 text-slate-400 hover:text-white transition absolute right-1 z-10 flex items-center justify-center"
+          "h-9 w-9 bg-transparent p-0 text-slate-400 hover:text-white transition absolute right-1 z-20 flex items-center justify-center"
         ),
         month_grid: "w-full border-collapse",
         weekdays: "grid grid-cols-7 mb-1",

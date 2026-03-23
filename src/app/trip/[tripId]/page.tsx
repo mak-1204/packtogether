@@ -259,7 +259,7 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
                     {startDate ? format(startDate, "PPP") : "Pick date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10" align="start">
+                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[60]" align="start">
                   <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
                 </PopoverContent>
               </Popover>
@@ -273,7 +273,7 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
                     {endDate ? format(endDate, "PPP") : "Pick date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10" align="start">
+                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[60]" align="start">
                   <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
                 </PopoverContent>
               </Popover>
