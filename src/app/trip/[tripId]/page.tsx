@@ -241,8 +241,15 @@ export default function TripDetailsPage() {
 }
 
 function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
-  const diffTime = Math.abs(toDate(trip.endDate).getTime() - toDate(trip.startDate).getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const start = toDate(trip.startDate);
+  const end = toDate(trip.endDate);
+  
+  // Normalize dates to midnight to ensure accurate day difference regardless of time-of-day
+  const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  
+  const diffTime = Math.abs(e.getTime() - s.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   const days = Array.from({ length: diffDays }, (_, i) => i + 1);
 
   return (
@@ -255,7 +262,7 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
       <Accordion type="multiple" className="space-y-4" defaultValue={['day-1']}>
         {days.map(dayNum => {
           const dayItems = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
-          const dayDate = addDays(toDate(trip.startDate), dayNum - 1);
+          const dayDate = addDays(s, dayNum - 1);
           const dayPlanned = dayItems.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0);
           const dayActual = dayItems.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
 
@@ -451,7 +458,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin }: any) 
                   <a href={s.link} target="_blank" className="text-teal-400 text-xs font-bold underline break-all flex items-center gap-1.5 hover:text-teal-300 transition-colors">
                     {s.link} <ExternalLink className="w-3 h-3" />
                   </a>
-                  {s.notes && <p className="text-[11px] text-zinc-400 italic">"{s.notes}"</p>}
+                  {s.notes && <p className="text-[10px] text-zinc-400 italic">"{s.notes}"</p>}
                   {s.aiRecommended && (
                     <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-start gap-2">
                       <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
@@ -1089,4 +1096,3 @@ function EditTripDialog({ firestore, trip }: any) {
     </Dialog>
   );
 }
-
