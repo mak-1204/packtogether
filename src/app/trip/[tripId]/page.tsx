@@ -217,10 +217,16 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
   const [destination, setDestination] = useState(trip.destination);
   const [startDate, setStartDate] = useState<Date | undefined>(toDate(trip.startDate));
   const [endDate, setEndDate] = useState<Date | undefined>(toDate(trip.endDate));
+  
+  const [startOpen, setStartOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
   const [open, setOpen] = useState(false);
 
   const handleUpdate = () => {
-    if (!name || !destination || !startDate || !endDate) return;
+    if (!name || !destination || !startDate || !endDate) {
+      toast({ variant: 'destructive', title: 'Missing fields', description: 'Please ensure all trip details are filled.' });
+      return;
+    }
     updateTripDetails(firestore, trip.id, {
       name,
       destination,
@@ -238,7 +244,7 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
           <Settings className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md w-[95%] rounded-[2.5rem] bg-[#0F172A] border-white/5 shadow-2xl p-8 backdrop-blur-3xl">
+      <DialogContent className="max-w-md w-[95%] rounded-[2.5rem] bg-[#0F172A] border-white/5 shadow-2xl p-8 backdrop-blur-3xl overflow-visible">
         <DialogHeader><DialogTitle className="text-white font-black text-2xl tracking-tighter">Edit Trip Details</DialogTitle></DialogHeader>
         <div className="space-y-5 py-4">
           <div className="space-y-2">
@@ -249,36 +255,56 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
             <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Destination</Label>
             <Input className="bg-white/[0.03] border-white/5 h-14 rounded-2xl focus:border-teal-500/50" value={destination} onChange={e => setDestination(e.target.value)} />
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Start Date</Label>
-              <Popover>
+              <Popover open={startOpen} onOpenChange={setStartOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl", !startDate && "text-muted-foreground")}>
+                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl transition-all hover:border-teal-500/50", !startDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4 text-teal-500" />
-                    {startDate ? format(startDate, "PPP") : "Pick date"}
+                    <span>{startDate ? format(startDate, "MMM do, yyyy") : "Pick start date"}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[60]" align="start">
-                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[100]" align="start">
+                  <Calendar 
+                    mode="single" 
+                    selected={startDate} 
+                    onSelect={(date) => {
+                      setStartDate(date);
+                      setStartOpen(false);
+                    }} 
+                    initialFocus 
+                  />
                 </PopoverContent>
               </Popover>
             </div>
+            
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">End Date</Label>
-              <Popover>
+              <Popover open={endOpen} onOpenChange={setEndOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl", !endDate && "text-muted-foreground")}>
+                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl transition-all hover:border-teal-500/50", !endDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4 text-teal-500" />
-                    {endDate ? format(endDate, "PPP") : "Pick date"}
+                    <span>{endDate ? format(endDate, "MMM do, yyyy") : "Pick end date"}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[60]" align="start">
-                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[100]" align="start">
+                  <Calendar 
+                    mode="single" 
+                    selected={endDate} 
+                    onSelect={(date) => {
+                      setEndDate(date);
+                      setEndOpen(false);
+                    }}
+                    disabled={(date) => startDate ? date < startDate : false}
+                    initialFocus 
+                  />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
+          
           <Button className="w-full h-16 bg-teal-500 hover:bg-teal-600 font-black rounded-2xl text-lg shadow-2xl shadow-teal-500/30 transition-all active:scale-95" onClick={handleUpdate}>Save Changes</Button>
         </div>
       </DialogContent>
