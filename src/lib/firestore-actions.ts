@@ -201,6 +201,22 @@ export function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
   return itemRef.id;
 }
 
+export function updateItineraryItem(db: Firestore, tripId: string, itemId: string, itemData: any) {
+  const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
+  const data = {
+    ...itemData,
+    updatedAt: serverTimestamp(),
+  };
+
+  updateDoc(itemRef, data).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: itemRef.path,
+      operation: 'update',
+      requestResourceData: data,
+    } satisfies SecurityRuleContext));
+  });
+}
+
 export function updateActualBudget(db: Firestore, tripId: string, itemId: string, amount: number) {
   const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
   updateDoc(itemRef, {

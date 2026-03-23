@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   updateActualBudget, 
   addItineraryItem, 
+  updateItineraryItem,
   addSuggestion, 
   markAiRecommended,
   addPackingItem, 
@@ -324,7 +325,7 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
                         </div>
                         <div className="space-y-4">
                           {slotItems.map((item: any) => (
-                            <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isMember={isMember} isAdmin={isAdmin} />
+                            <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isMember={isMember} isAdmin={isAdmin} days={days} />
                           ))}
                         </div>
                       </div>
@@ -340,7 +341,102 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
   );
 }
 
-function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin }: any) {
+function EditItineraryDialog({ firestore, tripId, item, days }: any) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(item.name || '');
+  const [category, setCategory] = useState(item.category || 'other');
+  const [day, setDay] = useState(item.dayNumber?.toString() || '1');
+  const [slot, setSlot] = useState(item.timeSlot || 'Morning');
+  const [budget, setBudget] = useState(item.plannedBudget?.toString() || '');
+  const [notes, setNotes] = useState(item.notes || '');
+
+  const handleSave = () => {
+    updateItineraryItem(firestore, tripId, item.id, {
+      name,
+      category,
+      dayNumber: Number(day),
+      timeSlot: slot,
+      plannedBudget: Number(budget),
+      notes
+    });
+    setOpen(false);
+    toast({ title: 'Activity Updated!' });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-10 w-10 text-zinc-500 hover:text-teal-500 hover:bg-teal-500/10 rounded-xl transition-all">
+          <Edit className="w-4 h-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md w-[95%] rounded-[2.5rem] bg-[#0F172A] border-white/5 shadow-2xl p-8 backdrop-blur-3xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-black text-white">Edit Activity</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6 mt-4">
+          <div className="space-y-2">
+            <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Activity Name</Label>
+            <Input className="bg-black/40 border-white/5 h-12 rounded-xl text-white font-bold" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="bg-black/40 border-white/5 h-12 rounded-xl text-white font-bold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0F172A] border-white/10 text-white">
+                  <SelectItem value="stay">🏨 Stay</SelectItem>
+                  <SelectItem value="travel">✈️ Travel</SelectItem>
+                  <SelectItem value="transport">🚗 Transport</SelectItem>
+                  <SelectItem value="food">🍱 Food</SelectItem>
+                  <SelectItem value="activity">🎭 Activity</SelectItem>
+                  <SelectItem value="other">✨ Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Planned Budget</Label>
+              <Input type="number" className="bg-black/40 border-white/5 h-12 rounded-xl text-white font-bold" value={budget} onChange={e => setBudget(e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Day</Label>
+              <Select value={day} onValueChange={setDay}>
+                <SelectTrigger className="bg-black/40 border-white/5 h-12 rounded-xl text-white font-bold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0F172A] border-white/10 text-white">
+                  {days.map((d: number) => <SelectItem key={d} value={d.toString()}>Day {d}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Time Slot</Label>
+              <Select value={slot} onValueChange={setSlot}>
+                <SelectTrigger className="bg-black/40 border-white/5 h-12 rounded-xl text-white font-bold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0F172A] border-white/10 text-white">
+                  {TIME_SLOTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Notes</Label>
+            <Textarea className="bg-black/40 border-white/5 rounded-xl text-white min-h-[100px]" value={notes} onChange={e => setNotes(e.target.value)} />
+          </div>
+          <Button className="w-full h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg shadow-xl shadow-teal-500/20" onClick={handleSave}>Save Changes</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }: any) {
   const [actual, setActual] = useState(item.actualBudget?.toString() || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newLink, setNewLink] = useState('');
@@ -426,14 +522,17 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin }: any) 
             />
           </div>
           {isMember && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-              onClick={() => deleteItineraryItem(firestore, tripId, item.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-1">
+              <EditItineraryDialog firestore={firestore} tripId={tripId} item={item} days={days} />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-10 w-10 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                onClick={() => deleteItineraryItem(firestore, tripId, item.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           )}
         </div>
 
