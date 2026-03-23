@@ -9,7 +9,8 @@ import {
   serverTimestamp,
   Firestore,
   Timestamp,
-  getDoc
+  getDoc,
+  deleteField
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
@@ -113,6 +114,47 @@ export async function joinTrip(db: Firestore, tripId: string, memberData: { name
   }
   
   return memberId;
+}
+
+export function updateMemberRole(db: Firestore, tripId: string, memberId: string, newRole: string) {
+  const memberDocRef = doc(db, 'trips', tripId, 'members', memberId);
+  const tripRef = doc(db, 'trips', tripId);
+
+  updateDoc(memberDocRef, { role: newRole }).catch(error => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: memberDocRef.path,
+      operation: 'update',
+      requestResourceData: { role: newRole }
+    }));
+  });
+
+  updateDoc(tripRef, { [`members.${memberId}`]: newRole }).catch(error => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: tripRef.path,
+      operation: 'update',
+      requestResourceData: { [`members.${memberId}`]: newRole }
+    }));
+  });
+}
+
+export function removeMember(db: Firestore, tripId: string, memberId: string) {
+  const memberDocRef = doc(db, 'trips', tripId, 'members', memberId);
+  const tripRef = doc(db, 'trips', tripId);
+
+  deleteDoc(memberDocRef).catch(error => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: memberDocRef.path,
+      operation: 'delete'
+    }));
+  });
+
+  updateDoc(tripRef, { [`members.${memberId}`]: deleteField() }).catch(error => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: tripRef.path,
+      operation: 'update',
+      requestResourceData: { [`members.${memberId}`]: 'deleted' }
+    }));
+  });
 }
 
 export function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
