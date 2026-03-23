@@ -20,7 +20,9 @@ import {
   markItemSuggestionAiPick,
   updateTripDetails,
   updateMemberRole,
-  removeMember
+  removeMember,
+  deleteSuggestion,
+  deleteItemSuggestion
 } from '@/lib/firestore-actions';
 import { aiTripSuggestionRecommendation } from '@/ai/flows/ai-trip-suggestion-recommendation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -489,6 +491,11 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
     toast({ title: 'AI Picked!', description: recommended.link });
   };
 
+  const handleDeleteSuggestion = (suggestionId: string) => {
+    deleteItemSuggestion(firestore, tripId, item.id, suggestionId);
+    toast({ title: 'Suggestion removed' });
+  };
+
   return (
     <Card className="bg-black/20 border-white/5 rounded-3xl overflow-hidden group/item">
       <CardContent className="p-5">
@@ -551,7 +558,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
           {showSuggestions && (
             <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
               {suggestions?.map((s: any) => (
-                <div key={s.id} className="bg-black/30 rounded-2xl p-4 border border-white/5 space-y-2 group/suggestion">
+                <div key={s.id} className="bg-black/30 rounded-2xl p-4 border border-white/5 space-y-2 group/suggestion relative">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center text-[10px] font-black text-teal-500">
@@ -559,11 +566,23 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
                       </div>
                       <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{s.addedBy}</span>
                     </div>
-                    {s.aiRecommended && (
-                      <Badge className="bg-amber-500 text-black font-black text-[9px] px-2 py-0 border-none">AI PICK</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {s.aiRecommended && (
+                        <Badge className="bg-amber-500 text-black font-black text-[9px] px-2 py-0 border-none">AI PICK</Badge>
+                      )}
+                      {isMember && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                          onClick={() => handleDeleteSuggestion(s.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <a href={s.link} target="_blank" className="text-teal-400 text-xs font-bold underline break-all flex items-center gap-1.5 hover:text-teal-300 transition-colors">
+                  <a href={s.link} target="_blank" className="text-teal-400 text-xs font-bold underline break-all flex items-center gap-1.5 hover:text-teal-300 transition-colors pr-8">
                     {s.link} <ExternalLink className="w-3 h-3" />
                   </a>
                   {s.notes && <p className="text-[10px] text-zinc-400 italic">"{s.notes}"</p>}
@@ -718,6 +737,11 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
     toast({ title: 'Suggestion Added!' });
   };
 
+  const handleDelete = (suggestionId: string) => {
+    deleteSuggestion(firestore, trip.id, suggestionId);
+    toast({ title: 'Idea removed' });
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-black tracking-tight">Idea Pool</h2>
@@ -756,7 +780,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
       <div className="space-y-6">
         {suggestions?.map((s: any) => (
           <Card key={s.id} className="bg-black/20 border-white/5 rounded-[2rem] overflow-hidden group">
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-6 space-y-4 relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 bg-teal-500/20 rounded-full flex items-center justify-center text-[10px] font-black text-teal-500">
@@ -764,10 +788,22 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
                   </div>
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{s.addedBy}</span>
                 </div>
-                {s.isAiRecommended && <Badge className="bg-amber-500 text-black font-black px-3 py-0.5 border-none">AI PICK</Badge>}
+                <div className="flex items-center gap-2">
+                  {s.isAiRecommended && <Badge className="bg-amber-500 text-black font-black px-3 py-0.5 border-none">AI PICK</Badge>}
+                  {isMember && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                      onClick={() => handleDelete(s.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="space-y-1">
-                <a href={s.link} target="_blank" className="text-teal-400 font-bold text-sm underline break-all flex items-center gap-1.5 hover:text-teal-300">
+                <a href={s.link} target="_blank" className="text-teal-400 font-bold text-sm underline break-all flex items-center gap-1.5 hover:text-teal-300 pr-8">
                   {s.link} <ExternalLink className="w-3 h-3" />
                 </a>
                 {s.notes && <p className="text-zinc-400 text-xs mt-1 leading-relaxed">"{s.notes}"</p>}

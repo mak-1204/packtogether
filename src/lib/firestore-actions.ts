@@ -381,3 +381,23 @@ export function markTripComplete(db: Firestore, tripId: string) {
     } satisfies SecurityRuleContext));
   });
 }
+
+export function deleteSuggestion(db: Firestore, tripId: string, suggestionId: string) {
+  const suggestionRef = doc(db, 'trips', tripId, 'suggestions', suggestionId);
+  deleteDoc(suggestionRef).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: suggestionRef.path,
+      operation: 'delete',
+    } satisfies SecurityRuleContext));
+  });
+}
+
+export function deleteItemSuggestion(db: Firestore, tripId: string, itemId: string, suggestionId: string) {
+  const suggestionRef = doc(db, 'trips', tripId, 'itineraryItems', itemId, 'suggestions', suggestionId);
+  deleteDoc(suggestionRef).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: suggestionRef.path,
+      operation: 'delete',
+    } satisfies SecurityRuleContext));
+  });
+}
