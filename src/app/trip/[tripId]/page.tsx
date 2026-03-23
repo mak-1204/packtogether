@@ -241,7 +241,9 @@ export default function TripDetailsPage() {
 }
 
 function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
-  const days = Array.from({ length: Math.ceil((toDate(trip.endDate).getTime() - toDate(trip.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1 }, (_, i) => i + 1);
+  const diffTime = Math.abs(toDate(trip.endDate).getTime() - toDate(trip.startDate).getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const days = Array.from({ length: diffDays }, (_, i) => i + 1);
 
   return (
     <div className="space-y-6">
@@ -250,71 +252,77 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
         {isMember && <AddItineraryDialog firestore={firestore} tripId={trip.id} days={days} />}
       </div>
       
-      {itinerary?.length === 0 ? (
-        <Card className="bg-white/5 border-white/5 p-12 text-center rounded-[2.5rem]">
-          <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CalendarIcon className="w-10 h-10 text-teal-500" />
-          </div>
-          <p className="text-zinc-400 font-bold">Your itinerary is a blank canvas. Start planning!</p>
-        </Card>
-      ) : (
-        <Accordion type="multiple" className="space-y-4" defaultValue={['day-1']}>
-          {days.map(dayNum => {
-            const dayItems = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
-            const dayDate = addDays(toDate(trip.startDate), dayNum - 1);
-            const dayPlanned = dayItems.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0);
-            const dayActual = dayItems.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
+      <Accordion type="multiple" className="space-y-4" defaultValue={['day-1']}>
+        {days.map(dayNum => {
+          const dayItems = itinerary?.filter((i: any) => i.dayNumber === dayNum) || [];
+          const dayDate = addDays(toDate(trip.startDate), dayNum - 1);
+          const dayPlanned = dayItems.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0);
+          const dayActual = dayItems.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
 
-            return (
-              <AccordionItem key={dayNum} value={`day-${dayNum}`} className="border border-white/5 rounded-[2.5rem] px-4 overflow-hidden bg-white/5 backdrop-blur-sm">
-                <AccordionTrigger className="hover:no-underline py-6">
-                  <div className="flex flex-col items-start gap-1">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl font-black">Day {dayNum}</span>
-                      <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">— {format(dayDate, 'EEE dd MMM')}</span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-teal-500">₹{dayActual.toLocaleString()} / ₹{dayPlanned.toLocaleString()}</span>
-                    </div>
+          return (
+            <AccordionItem key={dayNum} value={`day-${dayNum}`} className="border border-white/5 rounded-[2.5rem] px-4 overflow-hidden bg-white/5 backdrop-blur-sm">
+              <AccordionTrigger className="hover:no-underline py-6">
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black">Day {dayNum}</span>
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">— {format(dayDate, 'EEE dd MMM')}</span>
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-8 space-y-8">
-                  {dayItems.length === 0 ? (
-                    <div className="text-center py-10 space-y-4">
-                      <p className="text-zinc-500 font-bold italic">No activities planned for this day.</p>
-                      {isMember && <AddItineraryDialog firestore={firestore} tripId={trip.id} days={[dayNum]} defaultDay={dayNum} />}
+                  <div className="flex gap-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-500">₹{dayActual.toLocaleString()} / ₹{dayPlanned.toLocaleString()}</span>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-8 space-y-8">
+                {dayItems.length === 0 ? (
+                  <div className="text-center py-10 space-y-4">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-white/10">
+                      <CalendarIcon className="w-8 h-8 text-zinc-600" />
                     </div>
-                  ) : (
-                    TIME_SLOTS.map(slot => {
-                      const slotItems = dayItems.filter((i: any) => i.timeSlot === slot);
-                      if (slotItems.length === 0) return null;
+                    <p className="text-zinc-500 font-bold italic text-sm">No activities planned for this day yet.</p>
+                    {isMember && (
+                      <AddItineraryDialog 
+                        firestore={firestore} 
+                        tripId={trip.id} 
+                        days={days} 
+                        defaultDay={dayNum}
+                        trigger={
+                          <Button variant="outline" size="sm" className="bg-white/5 border-white/10 hover:border-teal-500/50 hover:bg-teal-500/10 text-[10px] font-black uppercase tracking-widest rounded-xl">
+                            <Plus className="w-3 h-3 mr-1.5" /> Add to Plan
+                          </Button>
+                        }
+                      />
+                    )}
+                  </div>
+                ) : (
+                  TIME_SLOTS.map(slot => {
+                    const slotItems = dayItems.filter((i: any) => i.timeSlot === slot);
+                    if (slotItems.length === 0) return null;
 
-                      return (
-                        <div key={slot} className="space-y-4">
-                          <div className="flex items-center gap-2">
-                            <div className="text-teal-500">
-                              {slot === 'Morning' && <Coffee className="w-4 h-4" />}
-                              {slot === 'Afternoon' && <Sun className="w-4 h-4" />}
-                              {slot === 'Evening' && <Sunset className="w-4 h-4" />}
-                              {slot === 'Night' && <Moon className="w-4 h-4" />}
-                            </div>
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{slot}</h4>
+                    return (
+                      <div key={slot} className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <div className="text-teal-500">
+                            {slot === 'Morning' && <Coffee className="w-4 h-4" />}
+                            {slot === 'Afternoon' && <Sun className="w-4 h-4" />}
+                            {slot === 'Evening' && <Sunset className="w-4 h-4" />}
+                            {slot === 'Night' && <Moon className="w-4 h-4" />}
                           </div>
-                          <div className="space-y-4">
-                            {slotItems.map((item: any) => (
-                              <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isMember={isMember} isAdmin={isAdmin} />
-                            ))}
-                          </div>
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{slot}</h4>
                         </div>
-                      );
-                    })
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      )}
+                        <div className="space-y-4">
+                          {slotItems.map((item: any) => (
+                            <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isMember={isMember} isAdmin={isAdmin} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
     </div>
   );
 }
@@ -632,7 +640,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
 
       <div className="space-y-6">
         {suggestions?.map((s: any) => (
-          <Card key={s.id} className="bg-black/20 border-white/5 rounded-[2rem] overflow-hidden group">
+          <Card className="bg-black/20 border-white/5 rounded-[2rem] overflow-hidden group">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -896,7 +904,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
   );
 }
 
-function AddItineraryDialog({ firestore, tripId, days, defaultDay }: any) {
+function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: any) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('other');
@@ -924,9 +932,11 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-teal-500 hover:bg-teal-600 rounded-2xl font-black gap-2 shadow-xl shadow-teal-500/20">
-          <Plus className="w-5 h-5" /> Add Activity
-        </Button>
+        {trigger || (
+          <Button className="bg-teal-500 hover:bg-teal-600 rounded-2xl font-black gap-2 shadow-xl shadow-teal-500/20">
+            <Plus className="w-5 h-5" /> Add Activity
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-md w-[95%] rounded-[2.5rem] bg-[#0F172A] border-white/5 shadow-2xl p-8 backdrop-blur-3xl">
         <DialogHeader>
@@ -1079,3 +1089,4 @@ function EditTripDialog({ firestore, trip }: any) {
     </Dialog>
   );
 }
+
