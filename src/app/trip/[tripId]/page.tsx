@@ -54,7 +54,7 @@ import {
 import { 
   CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
   Plus, MapPin, CheckCircle2, Trash2, 
-  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft, UserPlus, UserCog, UserMinus
+  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft, UserPlus, UserCog, UserMinus, Wallet, Users
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
