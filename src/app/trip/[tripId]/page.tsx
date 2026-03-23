@@ -449,8 +449,8 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
                   <SelectItem value="stay">🏨 Stay</SelectItem>
-                  <SelectItem value="travel">✈️ Travel</SelectItem>
-                  <SelectItem value="transport">🚗 Transport</SelectItem>
+                  <SelectItem value="travel">✈️ Journey</SelectItem>
+                  <SelectItem value="transport">🚗 Local Transit</SelectItem>
                   <SelectItem value="food">🍱 Food</SelectItem>
                   <SelectItem value="activity">🎭 Activity</SelectItem>
                   <SelectItem value="other">✨ Other</SelectItem>
@@ -985,8 +985,8 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
                   <SelectItem value="stay">🏨 Stay</SelectItem>
-                  <SelectItem value="travel">✈️ Travel</SelectItem>
-                  <SelectItem value="transport">🚗 Transport</SelectItem>
+                  <SelectItem value="travel">✈️ Journey</SelectItem>
+                  <SelectItem value="transport">🚗 Local Transit</SelectItem>
                   <SelectItem value="food">🍱 Food</SelectItem>
                   <SelectItem value="activity">🎭 Activity</SelectItem>
                   <SelectItem value="other">✨ Other</SelectItem>
