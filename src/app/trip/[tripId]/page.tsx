@@ -123,6 +123,8 @@ export default function TripDetailsPage() {
   const { data: members } = useCollection(membersQuery);
 
   const isOrganizer = user?.uid === trip?.organizerId;
+  const userRole = user?.uid && trip?.members ? trip.members[user.uid] : null;
+  const isAdmin = isOrganizer || userRole === 'admin';
   const isMember = user && trip?.members && (!!trip.members[user.uid] || user.uid === trip.organizerId);
 
   useEffect(() => {
@@ -131,10 +133,10 @@ export default function TripDetailsPage() {
       return;
     }
 
-    if (!isTripLoading && !isUserLoading && trip && !isOrganizer && !isMember) {
+    if (!isTripLoading && !isUserLoading && trip && !isMember) {
       router.push(`/join/${tripId}`);
     }
-  }, [isTripLoading, isUserLoading, user, trip, isOrganizer, isMember, tripId, router]);
+  }, [isTripLoading, isUserLoading, user, trip, isMember, tripId, router]);
 
   useEffect(() => {
     if (tripId) {
@@ -174,7 +176,7 @@ export default function TripDetailsPage() {
               <h1 className="font-black text-xl leading-tight truncate tracking-tighter text-white">{trip.destination}</h1>
               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest truncate">{trip.name}</span>
             </div>
-            {isOrganizer && (
+            {isAdmin && (
               <EditTripDialog firestore={firestore} trip={trip} />
             )}
           </div>
@@ -195,19 +197,19 @@ export default function TripDetailsPage() {
       <main className="container max-w-lg mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="itinerary" className="mt-0 outline-none">
-            <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} isMember={isMember} />
+            <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isAdmin={isAdmin} isMember={isMember} />
           </TabsContent>
           <TabsContent value="checklist" className="mt-0 outline-none">
-            <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
+            <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isAdmin={isAdmin} />
           </TabsContent>
           <TabsContent value="suggestions" className="mt-0 outline-none">
-            <SuggestionsTab firestore={firestore} trip={trip} suggestions={suggestions} isOrganizer={isOrganizer} />
+            <SuggestionsTab firestore={firestore} trip={trip} suggestions={suggestions} isAdmin={isAdmin} />
           </TabsContent>
           <TabsContent value="packing" className="mt-0 outline-none">
-            <PackingTab firestore={firestore} trip={trip} packing={packing} isOrganizer={isOrganizer} />
+            <PackingTab firestore={firestore} trip={trip} packing={packing} isAdmin={isAdmin} />
           </TabsContent>
           <TabsContent value="summary" className="mt-0 outline-none">
-            <SummaryTab firestore={firestore} trip={trip} itinerary={itinerary} members={members} isOrganizer={isOrganizer} />
+            <SummaryTab firestore={firestore} trip={trip} itinerary={itinerary} members={members} isAdmin={isAdmin} isOrganizer={isOrganizer} />
           </TabsContent>
 
           <TabsList className="fixed bottom-0 left-0 right-0 h-20 bg-[#0F172A]/90 backdrop-blur-2xl border-t border-white/5 rounded-none grid grid-cols-5 z-50 p-0 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
@@ -238,7 +240,7 @@ export default function TripDetailsPage() {
   );
 }
 
-function ItineraryTab({ firestore, trip, itinerary, isOrganizer, isMember }: any) {
+function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
   const days = Array.from({ length: Math.ceil((toDate(trip.endDate).getTime() - toDate(trip.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1 }, (_, i) => i + 1);
 
   return (
@@ -300,7 +302,7 @@ function ItineraryTab({ firestore, trip, itinerary, isOrganizer, isMember }: any
                           </div>
                           <div className="space-y-4">
                             {slotItems.map((item: any) => (
-                              <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isOrganizer={isOrganizer} />
+                              <ItineraryItemCard key={item.id} firestore={firestore} tripId={trip.id} item={item} isAdmin={isAdmin} />
                             ))}
                           </div>
                         </div>
@@ -317,7 +319,7 @@ function ItineraryTab({ firestore, trip, itinerary, isOrganizer, isMember }: any
   );
 }
 
-function ItineraryItemCard({ firestore, tripId, item, isOrganizer }: any) {
+function ItineraryItemCard({ firestore, tripId, item, isAdmin }: any) {
   const [actual, setActual] = useState(item.actualBudget?.toString() || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newLink, setNewLink] = useState('');
@@ -402,7 +404,7 @@ function ItineraryItemCard({ firestore, tripId, item, isOrganizer }: any) {
               onBlur={handleUpdateBudget}
             />
           </div>
-          {isOrganizer && (
+          {isAdmin && (
             <Button 
               variant="ghost" 
               size="icon" 
@@ -474,7 +476,7 @@ function ItineraryItemCard({ firestore, tripId, item, isOrganizer }: any) {
                 </div>
               </div>
 
-              {isOrganizer && suggestions && suggestions.length > 1 && (
+              {isAdmin && suggestions && suggestions.length > 1 && (
                 <Button 
                   className="w-full bg-white/5 hover:bg-amber-500/10 hover:text-amber-500 border border-white/5 hover:border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
                   onClick={handleAiRecommend}
@@ -490,7 +492,7 @@ function ItineraryItemCard({ firestore, tripId, item, isOrganizer }: any) {
   );
 }
 
-function ChecklistTab({ firestore, trip, itinerary, isOrganizer }: any) {
+function ChecklistTab({ firestore, trip, itinerary, isAdmin }: any) {
   const travelItems = itinerary?.filter((i: any) => i.category === 'transport' || i.category === 'travel') || [];
 
   return (
@@ -516,7 +518,7 @@ function ChecklistTab({ firestore, trip, itinerary, isOrganizer }: any) {
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Day {item.dayNumber}</p>
                 </div>
               </div>
-              <ChecklistItemsList firestore={firestore} tripId={trip.id} itemId={item.id} isOrganizer={isOrganizer} />
+              <ChecklistItemsList firestore={firestore} tripId={trip.id} itemId={item.id} isAdmin={isAdmin} />
             </div>
           ))}
         </div>
@@ -525,7 +527,7 @@ function ChecklistTab({ firestore, trip, itinerary, isOrganizer }: any) {
   );
 }
 
-function ChecklistItemsList({ firestore, tripId, itemId, isOrganizer }: any) {
+function ChecklistItemsList({ firestore, tripId, itemId, isAdmin }: any) {
   const checklistRef = useMemoFirebase(() => {
     return query(collection(firestore, 'trips', tripId, 'itineraryItems', itemId, 'checklistItems'), orderBy('order'));
   }, [firestore, tripId, itemId]);
@@ -533,7 +535,7 @@ function ChecklistItemsList({ firestore, tripId, itemId, isOrganizer }: any) {
   const { data: checklist } = useCollection(checklistRef);
 
   const cycleStatus = (id: string, current: string) => {
-    if (!isOrganizer) return;
+    if (!isAdmin) return;
     const next = current === 'red' ? 'yellow' : current === 'yellow' ? 'green' : 'red';
     updateChecklistItemStatus(firestore, tripId, itemId, id, next);
   };
@@ -550,7 +552,7 @@ function ChecklistItemsList({ firestore, tripId, itemId, isOrganizer }: any) {
                 item.status === 'green' ? "bg-teal-500 border-teal-500" :
                 item.status === 'yellow' ? "bg-amber-500 border-amber-500" :
                 "bg-red-500 border-red-500",
-                isOrganizer ? "cursor-pointer hover:scale-110" : "cursor-default"
+                isAdmin ? "cursor-pointer hover:scale-110" : "cursor-default"
               )}
             >
               {item.status === 'green' && <CheckCircle2 className="w-3 h-3 text-black mx-auto" />}
@@ -576,7 +578,7 @@ function ChecklistItemsList({ firestore, tripId, itemId, isOrganizer }: any) {
   );
 }
 
-function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: any) {
+function SuggestionsTab({ firestore, trip, suggestions, isAdmin }: any) {
   const [link, setLink] = useState('');
   const [notes, setNotes] = useState('');
   const { user } = useUser();
@@ -659,7 +661,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: any) {
   );
 }
 
-function PackingTab({ firestore, trip, packing, isOrganizer }: any) {
+function PackingTab({ firestore, trip, packing, isAdmin }: any) {
   const [newItem, setNewItem] = useState('');
 
   const handleAdd = () => {
@@ -735,7 +737,7 @@ function PackingTab({ firestore, trip, packing, isOrganizer }: any) {
   );
 }
 
-function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: any) {
+function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isOrganizer }: any) {
   const totalPlanned = itinerary?.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0;
   const totalActual = itinerary?.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0;
 
@@ -836,7 +838,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: any) {
                     <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{member.role}</p>
                   </div>
                 </div>
-                {isOrganizer && member.uid !== trip.organizerId && (
+                {isAdmin && member.uid !== trip.organizerId && (
                   <div className="flex items-center gap-1">
                     <Select 
                       defaultValue={member.role} 
@@ -873,7 +875,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: any) {
         <Share2 className="w-5 h-5" /> Share Invite Link
       </Button>
 
-      {isOrganizer && trip.status !== 'Completed' && (
+      {isAdmin && trip.status !== 'Completed' && (
         <Button 
           className="w-full h-16 bg-teal-500 hover:bg-teal-600 text-black font-black rounded-3xl gap-3 text-lg shadow-xl shadow-teal-500/20"
           onClick={() => markTripComplete(firestore, trip.id)}

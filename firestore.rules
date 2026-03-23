@@ -4,14 +4,14 @@ service cloud.firestore {
 
     /**
      * PACKTOGETHER SECURITY RULES
-     * Updated to allow new members to join and handle nested subcollections.
+     * Updated to allow multiple admins and handle nested subcollections.
      */
 
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Helper to check if user is the organizer or a member of a trip
+    // Helper to check if user is a member of a trip
     function isMember(tripData) {
       return isSignedIn() && (
         tripData.organizerId == request.auth.uid || 
@@ -19,9 +19,12 @@ service cloud.firestore {
       );
     }
 
-    // Helper to check if user is specifically the organizer
-    function isOrganizer(tripData) {
-      return isSignedIn() && tripData.organizerId == request.auth.uid;
+    // Helper to check if user is an admin or organizer
+    function isAdmin(tripData) {
+      return isSignedIn() && (
+        tripData.organizerId == request.auth.uid || 
+        (tripData.members != null && tripData.members[request.auth.uid] == 'admin')
+      );
     }
 
     /** @description Slideshow for landing page. */
@@ -37,23 +40,19 @@ service cloud.firestore {
 
     /** @description Trip records and subcollections. */
     match /trips/{tripId} {
-      // Allow anyone to read a specific trip (for public sharing links)
       allow get: if true;
-      
-      // Allow signed-in users to list trips (for the dashboard)
       allow list: if isSignedIn();
-      
       allow create: if isSignedIn();
       
-      // Allow update if member OR if a signed-in user is joining (adding themselves to members)
-      allow update: if isMember(resource.data) || isSignedIn();
+      // Allow update if admin or if a signed-in user is joining
+      allow update: if isAdmin(resource.data) || isMember(resource.data) || isSignedIn();
       
-      allow delete: if isOrganizer(resource.data);
+      allow delete: if isAdmin(resource.data);
 
       match /members/{memberId} {
         allow read: if true;
-        allow create: if isSignedIn(); // Must be signed in to create member record
-        allow update, delete: if isSignedIn() && (request.auth.uid == memberId || isOrganizer(get(/databases/$(database)/documents/trips/$(tripId)).data));
+        allow create: if isSignedIn();
+        allow update, delete: if isSignedIn() && (request.auth.uid == memberId || isAdmin(get(/databases/$(database)/documents/trips/$(tripId)).data));
       }
 
       match /itineraryItems/{itemId} {
@@ -62,23 +61,23 @@ service cloud.firestore {
         
         match /checklistItems/{checklistItemId} {
            allow read: if true;
-           allow write: if isSignedIn();
+           allow write: if isMember(get(/databases/$(database)/documents/trips/$(tripId)).data);
         }
 
         match /suggestions/{suggestionId} {
            allow read: if true;
-           allow write: if isSignedIn();
+           allow write: if isMember(get(/databases/$(database)/documents/trips/$(tripId)).data);
         }
       }
 
       match /suggestions/{suggestionId} {
         allow read: if true;
-        allow write: if isSignedIn();
+        allow write: if isMember(get(/databases/$(database)/documents/trips/$(tripId)).data);
       }
 
       match /packingItems/{packingItemId} {
         allow read: if true;
-        allow write: if isSignedIn();
+        allow write: if isMember(get(/databases/$(database)/documents/trips/$(tripId)).data);
       }
     }
 
