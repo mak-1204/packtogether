@@ -47,6 +47,24 @@ export function createTrip(db: Firestore, tripData: any, userId: string, tripId:
   return tripId;
 }
 
+export function updateTripDetails(db: Firestore, tripId: string, data: any) {
+  const tripRef = doc(db, 'trips', tripId);
+  const updateData = {
+    ...data,
+    startDate: data.startDate instanceof Date ? Timestamp.fromDate(data.startDate) : data.startDate,
+    endDate: data.endDate instanceof Date ? Timestamp.fromDate(data.endDate) : data.endDate,
+    updatedAt: serverTimestamp(),
+  };
+  
+  updateDoc(tripRef, updateData).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: tripRef.path,
+      operation: 'update',
+      requestResourceData: updateData,
+    } satisfies SecurityRuleContext));
+  });
+}
+
 export function deleteTrip(db: Firestore, tripId: string) {
   const tripRef = doc(db, 'trips', tripId);
   deleteDoc(tripRef).catch(async (error) => {

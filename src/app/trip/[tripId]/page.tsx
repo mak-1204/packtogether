@@ -16,7 +16,8 @@ import {
   deleteItineraryItem,
   updateChecklistItemStatus,
   addItemSuggestion,
-  markItemSuggestionAiPick
+  markItemSuggestionAiPick,
+  updateTripDetails
 } from '@/lib/firestore-actions';
 import { aiTripSuggestionRecommendation } from '@/ai/flows/ai-trip-suggestion-recommendation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,6 +29,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Accordion,
   AccordionContent,
@@ -51,7 +54,7 @@ import {
 import { 
   Calendar as CalendarIcon, CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
   Plus, MapPin, CheckCircle2, Circle, Trash2, 
-  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Info, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle
+  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Info, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -140,11 +143,16 @@ export default function TripDetailsPage() {
     <div className="min-h-screen bg-[#0F172A] pb-24 text-white selection:bg-teal-500/30">
       <header className="sticky top-0 z-50 bg-[#0F172A]/80 backdrop-blur-xl border-b border-white/5 p-4 shadow-2xl">
         <div className="container max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex flex-col">
-            <h1 className="font-black text-xl leading-tight truncate tracking-tighter text-white">{trip.destination}</h1>
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{trip.name}</span>
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="flex flex-col min-w-0">
+              <h1 className="font-black text-xl leading-tight truncate tracking-tighter text-white">{trip.destination}</h1>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest truncate">{trip.name}</span>
+            </div>
+            {isOrganizer && (
+              <EditTripDialog firestore={firestore} trip={trip} />
+            )}
           </div>
-          <div className={cn("flex flex-col items-end", budgetHealthColor)}>
+          <div className={cn("flex flex-col items-end shrink-0", budgetHealthColor)}>
             <span className="text-sm font-black">₹{totalActual.toLocaleString()}</span>
             <div className="w-20 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
               <div 
@@ -201,6 +209,80 @@ export default function TripDetailsPage() {
         </Tabs>
       </main>
     </div>
+  );
+}
+
+function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }) {
+  const [name, setName] = useState(trip.name);
+  const [destination, setDestination] = useState(trip.destination);
+  const [startDate, setStartDate] = useState<Date | undefined>(toDate(trip.startDate));
+  const [endDate, setEndDate] = useState<Date | undefined>(toDate(trip.endDate));
+  const [open, setOpen] = useState(false);
+
+  const handleUpdate = () => {
+    if (!name || !destination || !startDate || !endDate) return;
+    updateTripDetails(firestore, trip.id, {
+      name,
+      destination,
+      startDate,
+      endDate
+    });
+    setOpen(false);
+    toast({ title: 'Trip updated!' });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white hover:bg-white/5 rounded-lg shrink-0">
+          <Settings className="w-4 h-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md w-[95%] rounded-[2.5rem] bg-[#0F172A] border-white/5 shadow-2xl p-8 backdrop-blur-3xl">
+        <DialogHeader><DialogTitle className="text-white font-black text-2xl tracking-tighter">Edit Trip Details</DialogTitle></DialogHeader>
+        <div className="space-y-5 py-4">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Trip Name</Label>
+            <Input className="bg-white/[0.03] border-white/5 h-14 rounded-2xl focus:border-teal-500/50" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Destination</Label>
+            <Input className="bg-white/[0.03] border-white/5 h-14 rounded-2xl focus:border-teal-500/50" value={destination} onChange={e => setDestination(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Start Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl", !startDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4 text-teal-500" />
+                    {startDate ? format(startDate, "PPP") : "Pick date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10" align="start">
+                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">End Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl", !endDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4 text-teal-500" />
+                    {endDate ? format(endDate, "PPP") : "Pick date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10" align="start">
+                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <Button className="w-full h-16 bg-teal-500 hover:bg-teal-600 font-black rounded-2xl text-lg shadow-2xl shadow-teal-500/30 transition-all active:scale-95" onClick={handleUpdate}>Save Changes</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -599,7 +681,7 @@ function AddItemDialog({ firestore, tripId, dayNumber }: { firestore: Firestore,
           )}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Extra Details</Label>
-            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl min-h-[100px] focus:border-teal-500/50" placeholder="Booking references, addresses, etc." value={notes} onChange={e => setNotes(e.target.value)} />
+            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl min-h-[100px] focus:border-teal-500/50" placeholder="Booking references, addresses, etc." value={notes} onChange={setNotes} />
           </div>
           <Button className="w-full h-16 bg-teal-500 hover:bg-teal-600 font-black rounded-2xl text-lg shadow-2xl shadow-teal-500/30 transition-all active:scale-95" onClick={handleAdd}>Add to Plan</Button>
         </div>
@@ -787,7 +869,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isOrganizer }: { firesto
           </div>
           <div className="space-y-2">
             <Label className="font-black text-teal-500 uppercase tracking-widest text-[10px] ml-1">Notes</Label>
-            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl h-24 focus:border-teal-500/50" placeholder="Why is this awesome?" value={notes} onChange={e => setNotes(e.target.value)} />
+            <Textarea className="bg-white/[0.03] border-white/5 rounded-2xl h-24 focus:border-teal-500/50" placeholder="Why is this awesome?" value={notes} onChange={setNotes} />
           </div>
           <Button className="w-full h-16 bg-teal-500 hover:bg-teal-600 font-black rounded-2xl text-lg shadow-2xl shadow-teal-500/30 transition-all active:scale-95" onClick={handleAdd}>Share with Gang</Button>
         </CardContent>
