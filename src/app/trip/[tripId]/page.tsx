@@ -151,7 +151,14 @@ export default function TripDetailsPage() {
     }
   }, [tripId]);
 
-  if (isTripLoading || isUserLoading) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-teal-500"><Loader2 className="animate-spin w-12 h-12" /></div>;
+  if (isTripLoading || isUserLoading) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-4 border-slate-700 border-t-teal-500 animate-spin" />
+      </div>
+    );
+  }
+
   if (!trip || !firestore) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-white font-bold">Trip not found.</div>;
 
   const totalPlanned = itinerary?.reduce((sum, item) => sum + (item.plannedBudget || 0), 0) || 0;
@@ -244,7 +251,6 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
   const start = toDate(trip.startDate);
   const end = toDate(trip.endDate);
   
-  // Normalize dates to midnight to ensure accurate day difference regardless of time-of-day
   const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
   const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
   
@@ -647,7 +653,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
 
       <div className="space-y-6">
         {suggestions?.map((s: any) => (
-          <Card className="bg-black/20 border-white/5 rounded-[2rem] overflow-hidden group">
+          <Card key={s.id} className="bg-black/20 border-white/5 rounded-[2rem] overflow-hidden group">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

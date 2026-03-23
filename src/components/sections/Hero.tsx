@@ -5,31 +5,45 @@ import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
 import { KENBURNS_SCALE } from '@/lib/slides';
 import Link from 'next/link';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 
 export default function Hero() {
   const { slides, currentSlide, currentIndex, transitioning, slidesLoading, zoomProgress } = useSlideshow();
   const { user } = useUser();
+  const auth = useAuth();
   const router = useRouter();
 
   // Calculate current scale based on RAF-driven progress
   const ZOOM_SCALE_START = 1.0;
   const currentScale = ZOOM_SCALE_START + (KENBURNS_SCALE - ZOOM_SCALE_START) * zoomProgress;
 
-  const handleCreateTrip = () => {
+  const handleCreateTrip = async () => {
     if (user) {
       router.push('/create-trip');
     } else {
-      router.push('/auth?redirect=/create-trip');
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        router.push('/create-trip');
+      } catch (error) {
+        console.error("Sign in failed:", error);
+      }
     }
   };
 
-  const handleMyTrips = () => {
+  const handleMyTrips = async () => {
     if (user) {
       router.push('/dashboard');
     } else {
-      router.push('/auth');
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        router.push('/dashboard');
+      } catch (error) {
+        console.error("Sign in failed:", error);
+      }
     }
   };
 

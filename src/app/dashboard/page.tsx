@@ -77,8 +77,8 @@ export default function DashboardPage() {
 
   if (isUserLoading) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]">
-        <Loader2 className="animate-spin w-12 h-12" />
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-4 border-slate-700 border-t-teal-500 animate-spin" />
       </div>
     );
   }
