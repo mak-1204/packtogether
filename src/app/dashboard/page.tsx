@@ -147,8 +147,8 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#0F172A] text-white pb-24 selection:bg-[#0D9488] selection:text-white">
       <header className="border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-lg sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between px-4 mx-auto max-w-7xl">
-          <Link href="/" className="flex items-center gap-2">
-            <Compass className="w-6 h-6 sm:w-8 sm:h-8 text-[#0D9488]" />
+          <Link href="/" className="flex items-center gap-2 group">
+            <Compass className="w-6 h-6 sm:w-8 sm:h-8 text-[#0D9488] transition-transform group-hover:scale-110" />
             <span className="text-lg sm:text-xl font-black tracking-tighter">PackTogether</span>
           </Link>
           <div className="flex items-center gap-3">
@@ -170,7 +170,7 @@ export default function DashboardPage() {
       </header>
 
       <main className="container max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
+        <div className="mb-8 text-center sm:text-left">
           <h1 className="text-3xl md:text-5xl font-black mb-2 tracking-tight">
             Hey {firstName} 👋
           </h1>
@@ -195,9 +195,9 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {trips.map((trip) => (
-              <Card key={trip.id} className="overflow-hidden border-white/5 bg-white/5 hover:bg-white/[0.08] transition-all group rounded-[2rem] sm:rounded-[2.5rem] shadow-xl">
+              <Card key={trip.id} className="overflow-hidden border-white/5 bg-white/5 hover:bg-white/[0.08] hover:-translate-y-1.5 hover:border-[#0D9488]/30 transition-all duration-500 group rounded-[2rem] sm:rounded-[2.5rem] shadow-xl hover:shadow-[#0D9488]/5">
                 <div className="relative h-40 sm:h-48 w-full">
                   <Image 
                     src={trip.coverImageUrl || `https://picsum.photos/seed/${trip.id}/400/200`} 
@@ -301,7 +301,7 @@ export default function DashboardPage() {
       </main>
 
       <Link href="/create-trip">
-        <Button size="icon" className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#0D9488] hover:bg-[#0D9488]/90 shadow-2xl shadow-[#0D9488]/40 z-50 transition-all active:scale-90">
+        <Button size="icon" className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#0D9488] hover:bg-[#0D9488]/90 shadow-2xl shadow-[#0D9488]/40 z-50 transition-all hover:scale-110 active:scale-90">
           <Plus className="w-7 h-7 sm:w-8 sm:h-8" />
         </Button>
       </Link>

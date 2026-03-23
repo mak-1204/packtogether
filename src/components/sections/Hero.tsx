@@ -97,7 +97,7 @@ export default function Hero() {
       {/* Header / Logo */}
       <header className="absolute top-0 left-0 p-6 z-[4]">
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-          <Compass className="w-6 h-6 sm:w-8 sm:h-8 text-[#0D9488] transition-transform group-hover:rotate-45 duration-500" />
+          <Compass className="w-6 h-6 sm:w-8 sm:h-8 text-[#0D9488] transition-transform group-hover:scale-110 duration-500" />
           <span className="text-xl sm:text-2xl font-bold tracking-tight text-white font-headline">PackTogether</span>
         </Link>
       </header>
@@ -114,7 +114,7 @@ export default function Hero() {
           <Button 
             onClick={handleCreateTrip}
             size="lg" 
-            className="w-full sm:w-auto bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg px-8 h-14 rounded-full font-bold shadow-2xl shadow-[#0D9488]/20"
+            className="w-full sm:w-auto bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg px-8 h-14 rounded-full font-bold shadow-2xl shadow-[#0D9488]/20 hover:scale-105 transition-all duration-300 active:scale-95"
           >
             Create a Trip
           </Button>
@@ -122,7 +122,7 @@ export default function Hero() {
             onClick={handleMyTrips}
             size="lg" 
             variant="outline" 
-            className="w-full sm:w-auto border-white text-white hover:bg-white/10 text-lg px-8 h-14 rounded-full font-bold"
+            className="w-full sm:w-auto border-white text-white hover:bg-white/10 text-lg px-8 h-14 rounded-full font-bold hover:scale-105 transition-all duration-300 active:scale-95"
           >
             My Trips
           </Button>

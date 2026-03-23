@@ -192,7 +192,7 @@ export default function TripDetailsPage() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl shrink-0"
+              className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl shrink-0 transition-all hover:scale-110"
               onClick={() => router.push('/dashboard')}
             >
               <ArrowLeft className="w-5 h-5" />
@@ -285,11 +285,11 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
           const dayActual = dayItems.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0);
 
           return (
-            <AccordionItem key={dayNum} value={`day-${dayNum}`} className="border border-white/5 rounded-[1.5rem] sm:rounded-[2.5rem] px-4 overflow-hidden bg-white/5 backdrop-blur-sm">
-              <AccordionTrigger className="hover:no-underline py-4 sm:py-6">
+            <AccordionItem key={dayNum} value={`day-${dayNum}`} className="border border-white/5 rounded-[1.5rem] sm:rounded-[2.5rem] px-4 overflow-hidden bg-white/5 backdrop-blur-sm transition-all hover:bg-white/10">
+              <AccordionTrigger className="hover:no-underline py-4 sm:py-6 group">
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl sm:text-2xl font-black">Day {dayNum}</span>
+                    <span className="text-xl sm:text-2xl font-black transition-transform group-hover:scale-105">Day {dayNum}</span>
                     <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">— {format(dayDate, 'EEE dd MMM')}</span>
                   </div>
                   <div className="flex gap-4 items-center">
@@ -314,7 +314,7 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
                         days={days} 
                         defaultDay={dayNum}
                         trigger={
-                          <Button variant="outline" size="sm" className="bg-white/5 border-white/10 hover:border-teal-500/50 hover:bg-teal-500/10 text-[10px] font-black uppercase tracking-widest rounded-xl px-4 h-9">
+                          <Button variant="outline" size="sm" className="bg-white/5 border-white/10 hover:border-teal-500/50 hover:bg-teal-500/10 text-[10px] font-black uppercase tracking-widest rounded-xl px-4 h-9 transition-all hover:scale-105 active:scale-95">
                             <Plus className="w-3 h-3 mr-1.5" /> Add Activity
                           </Button>
                         }
@@ -368,8 +368,8 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
   };
 
   return (
-    <div className="flex items-center gap-2 py-3 border-b border-slate-800 last:border-none">
-      <div className="shrink-0 w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500">
+    <div className="flex items-center gap-2 py-3 border-b border-slate-800 last:border-none group">
+      <div className="shrink-0 w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500 transition-transform group-hover:scale-110">
         {item.category === 'transit' ? <Car className="w-5 h-5" /> :
          item.category === 'journey' ? <Plane className="w-5 h-5" /> :
          item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
@@ -377,7 +377,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
          <Sparkles className="w-5 h-5" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-bold truncate">{item.name}</p>
+        <p className="text-white text-sm font-bold truncate group-hover:text-teal-400 transition-colors">{item.name}</p>
         <p className="text-slate-400 text-[10px] font-medium">₹{item.plannedBudget?.toLocaleString()} planned</p>
       </div>
       <div className="shrink-0 flex items-center gap-2">
@@ -398,7 +398,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg shrink-0"
+              className="h-8 w-8 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg shrink-0 transition-all hover:scale-110"
               onClick={() => deleteItineraryItem(firestore, tripId, item.id)}
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -439,7 +439,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-600 hover:text-teal-500 hover:bg-teal-500/10 rounded-lg shrink-0">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-600 hover:text-teal-500 hover:bg-teal-500/10 rounded-lg shrink-0 transition-all hover:scale-110">
           <Edit className="w-3.5 h-3.5" />
         </Button>
       </DialogTrigger>
@@ -522,7 +522,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
             <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Notes</Label>
             <Textarea className="bg-black/40 border-white/5 rounded-xl text-white min-h-[80px] text-sm" value={notes} onChange={e => setNotes(e.target.value)} />
           </div>
-          <Button className="w-full h-12 sm:h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg shadow-xl shadow-teal-500/20" onClick={handleSave}>Save Changes</Button>
+          <Button className="w-full h-12 sm:h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg shadow-xl shadow-teal-500/20 transition-all active:scale-95" onClick={handleSave}>Save Changes</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -590,14 +590,14 @@ function ChecklistTab({ firestore, trip, itinerary, isMember, isOrganizer }: any
               
               <div className="bg-white/5 rounded-[1.5rem] overflow-hidden">
                 {item.checklist.map((check: any, index: number) => (
-                  <div key={index} className="flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-none group">
+                  <div key={index} className="flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-none group hover:bg-white/[0.03] transition-colors">
                     <button 
                       onClick={() => handleCycleStatus(item.id, index, check.status)}
                       className={cn(
                         "w-5 h-5 rounded-full flex-shrink-0 transition-all",
                         check.status === "green" ? "bg-teal-500" :
                         check.status === "yellow" ? "bg-amber-500" : "bg-red-500",
-                        isOrganizer ? "cursor-pointer active:scale-90" : "cursor-default"
+                        isOrganizer ? "cursor-pointer active:scale-90 hover:scale-110" : "cursor-default"
                       )}
                     />
                     <span className={cn(
@@ -655,19 +655,19 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
           <input
             type="url"
             placeholder="Paste a link (hotel, place, etc.)"
-            className="w-full bg-[#0F172A] text-white border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-teal-500 outline-none"
+            className="w-full bg-[#0F172A] text-white border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-teal-500 outline-none transition-all"
             value={link}
             onChange={e => setLink(e.target.value)}
           />
           <input
             type="text"
             placeholder="Add a note (optional)"
-            className="w-full bg-[#0F172A] text-white border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-teal-500 outline-none"
+            className="w-full bg-[#0F172A] text-white border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-teal-500 outline-none transition-all"
             value={notes}
             onChange={e => setNotes(e.target.value)}
           />
           <button 
-            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-black py-3 rounded-xl text-sm transition-all active:scale-95 shadow-lg shadow-teal-500/20"
+            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-black py-3 rounded-xl text-sm transition-all active:scale-95 shadow-lg shadow-teal-500/20 hover:scale-[1.02]"
             onClick={handleAdd}
           >
             Add Suggestion
@@ -677,7 +677,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
 
       <div className="space-y-4">
         {suggestions?.map((s: any) => (
-          <Card key={s.id} className="bg-black/20 border-white/5 rounded-[1.5rem] overflow-hidden group">
+          <Card key={s.id} className="bg-black/20 border-white/5 rounded-[1.5rem] overflow-hidden group hover:bg-black/30 transition-all hover:border-teal-500/20">
             <CardContent className="p-4 sm:p-6 space-y-3 relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
@@ -761,7 +761,7 @@ function PackingTab({ firestore, trip, packing, isMember }: any) {
             onChange={e => setNewItem(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
           />
-          <Button className="h-12 w-12 bg-teal-500 hover:bg-teal-600 rounded-xl sm:rounded-2xl shrink-0" onClick={handleAdd}>
+          <Button className="h-12 w-12 bg-teal-500 hover:bg-teal-600 rounded-xl sm:rounded-2xl shrink-0 transition-all hover:scale-110 active:scale-90" onClick={handleAdd}>
             <Plus className="w-6 h-6" />
           </Button>
         </div>
@@ -769,7 +769,7 @@ function PackingTab({ firestore, trip, packing, isMember }: any) {
 
       <div className="space-y-2 sm:space-y-3">
         {packing?.map((item: any) => (
-          <div key={item.id} className="flex items-center gap-3 py-3 border-b border-slate-800 last:border-none group">
+          <div key={item.id} className="flex items-center gap-3 py-3 border-b border-slate-800 last:border-none group hover:bg-white/[0.02] transition-colors rounded-lg px-2 -mx-2">
             <button 
               onClick={() => togglePackedStatus(firestore, trip.id, item.id, item.isPacked)}
               className={cn(
@@ -790,7 +790,7 @@ function PackingTab({ firestore, trip, packing, isMember }: any) {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 text-zinc-600 hover:text-red-500 opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-all shrink-0"
+                className="h-8 w-8 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all shrink-0"
                 onClick={() => deletePackingItem(firestore, trip.id, item.id)}
               >
                 <Trash2 className="w-4 h-4" />
@@ -824,14 +824,14 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="grid grid-cols-2 gap-3">
-        <Card className="bg-teal-500 border-none rounded-xl sm:rounded-[2rem] shadow-xl shadow-teal-500/20">
+        <Card className="bg-teal-500 border-none rounded-xl sm:rounded-[2rem] shadow-xl shadow-teal-500/20 transition-transform hover:scale-[1.02]">
           <CardContent className="p-4 sm:p-6 text-black text-center sm:text-left">
             <PieChartIcon className="w-5 h-5 sm:w-6 sm:h-6 mb-3 sm:mb-4 mx-auto sm:mx-0" />
             <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Spent</p>
             <h3 className="text-xl sm:text-3xl font-black truncate">₹{totalActual.toLocaleString()}</h3>
           </CardContent>
         </Card>
-        <Card className="bg-white/5 border-white/5 rounded-xl sm:rounded-[2rem]">
+        <Card className="bg-white/5 border-white/5 rounded-xl sm:rounded-[2rem] transition-transform hover:scale-[1.02]">
           <CardContent className="p-4 sm:p-6 text-center sm:text-left">
             <Wallet className="w-5 h-5 sm:w-6 sm:h-6 mb-3 sm:mb-4 text-teal-500 mx-auto sm:mx-0" />
             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Planned</p>
@@ -884,16 +884,16 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
           <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
             <Users className="w-5 h-5 text-teal-500" /> The Gang
           </h3>
-          <Button variant="ghost" size="sm" onClick={handleShare} className="text-teal-500 font-black uppercase tracking-widest text-[10px] gap-2 h-8 px-2">
+          <Button variant="ghost" size="sm" onClick={handleShare} className="text-teal-500 font-black uppercase tracking-widest text-[10px] gap-2 h-8 px-2 transition-all hover:scale-105 active:scale-95">
             <UserPlus className="w-3.5 h-3.5" /> Invite
           </Button>
         </div>
         <Card className="bg-white/5 border-white/5 rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden">
           <CardContent className="p-4 space-y-4">
             {members?.map((member: any) => (
-              <div key={member.id} className="flex items-center justify-between gap-2">
+              <div key={member.id} className="flex items-center justify-between gap-2 group">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border border-white/10 shadow-lg shrink-0">
+                  <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border border-white/10 shadow-lg shrink-0 transition-transform group-hover:scale-110">
                     <AvatarImage src={member.photoURL || ''} />
                     <AvatarFallback className="bg-teal-500 text-black font-black text-xs sm:text-sm">
                       {member.name[0].toUpperCase()}
@@ -905,7 +905,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
                   </div>
                 </div>
                 {isAdmin && member.uid !== trip.organizerId && (
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Select 
                       defaultValue={member.role} 
                       onValueChange={(val) => updateMemberRole(firestore, trip.id, member.uid, val)}
@@ -937,7 +937,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
       <div className="flex flex-col gap-3">
         {isMember && (
           <Button 
-            className="w-full h-14 sm:h-16 bg-white/5 hover:bg-white/10 text-zinc-400 font-black rounded-2xl sm:rounded-3xl gap-3 text-xs sm:text-sm uppercase tracking-widest border border-white/5 active:scale-95 transition-all"
+            className="w-full h-14 sm:h-16 bg-white/5 hover:bg-white/10 text-zinc-400 font-black rounded-2xl sm:rounded-3xl gap-3 text-xs sm:text-sm uppercase tracking-widest border border-white/5 active:scale-95 transition-all hover:scale-[1.02]"
             onClick={handleShare}
           >
             <Share2 className="w-5 h-5" /> Share Invite Link
@@ -946,7 +946,7 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
 
         {isMember && trip.status !== 'Completed' && (
           <Button 
-            className="w-full h-14 sm:h-16 bg-teal-500 hover:bg-teal-600 text-black font-black rounded-2xl sm:rounded-3xl gap-3 text-base sm:text-lg shadow-xl shadow-teal-500/20 active:scale-95 transition-all"
+            className="w-full h-14 sm:h-16 bg-teal-500 hover:bg-teal-600 text-black font-black rounded-2xl sm:rounded-3xl gap-3 text-base sm:text-lg shadow-xl shadow-teal-500/20 active:scale-95 transition-all hover:scale-[1.02]"
             onClick={() => markTripComplete(firestore, trip.id)}
           >
             <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> Complete Trip
@@ -991,7 +991,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {trigger || (
-          <Button className="bg-teal-500 hover:bg-teal-600 rounded-xl sm:rounded-2xl font-black gap-2 shadow-xl shadow-teal-500/20 h-10 px-4">
+          <Button className="bg-teal-500 hover:bg-teal-600 rounded-xl sm:rounded-2xl font-black gap-2 shadow-xl shadow-teal-500/20 h-10 px-4 transition-all hover:scale-105 active:scale-95">
             <Plus className="w-5 h-5" /> <span className="hidden sm:inline">Add Activity</span>
           </Button>
         )}
@@ -1003,7 +1003,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
         <div className="space-y-4 sm:space-y-6 mt-6">
           <div className="space-y-2">
             <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Activity Name</Label>
-            <Input className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm" value={name} onChange={e => setName(e.target.value)} />
+            <Input className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500" value={name} onChange={e => setName(e.target.value)} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -1012,7 +1012,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
                 setCategory(val);
                 if (val !== 'journey' && val !== 'transit') setMode(undefined);
               }}>
-                <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
+                <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
@@ -1029,7 +1029,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
               <div className="space-y-2">
                 <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Mode</Label>
                 <Select value={mode} onValueChange={setMode}>
-                  <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
+                  <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500">
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0F172A] border-white/10 text-white">
@@ -1044,14 +1044,14 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
             )}
             <div className="space-y-2">
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Planned Budget</Label>
-              <Input type="number" className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm" value={budget} onChange={e => setBudget(e.target.value)} />
+              <Input type="number" className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500" value={budget} onChange={e => setBudget(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Day</Label>
               <Select value={day} onValueChange={setDay}>
-                <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
+                <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
@@ -1062,7 +1062,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
             <div className="space-y-2">
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Time Slot</Label>
               <Select value={slot} onValueChange={setSlot}>
-                <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
+                <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
@@ -1073,9 +1073,9 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Notes</Label>
-            <Textarea className="bg-black/40 border-white/5 rounded-xl text-white min-h-[80px] text-sm" value={notes} onChange={e => setNotes(e.target.value)} />
+            <Textarea className="bg-black/40 border-white/5 rounded-xl text-white min-h-[80px] text-sm transition-all focus:border-teal-500" value={notes} onChange={e => setNotes(e.target.value)} />
           </div>
-          <Button className="w-full h-12 sm:h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg shadow-xl shadow-teal-500/20" onClick={handleAdd}>Add to Plan</Button>
+          <Button className="w-full h-12 sm:h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg shadow-xl shadow-teal-500/20 transition-all hover:scale-[1.02] active:scale-95" onClick={handleAdd}>Add to Plan</Button>
         </div>
       </SheetContent>
     </Sheet>
@@ -1109,7 +1109,7 @@ function EditTripDialog({ firestore, trip }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl shrink-0">
+        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl shrink-0 transition-all hover:scale-110">
           <Settings className="w-5 h-5" />
         </Button>
       </DialogTrigger>
@@ -1120,11 +1120,11 @@ function EditTripDialog({ firestore, trip }: any) {
         <form onSubmit={handleSave} className="space-y-4 sm:space-y-6 mt-4">
           <div className="space-y-2">
             <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Trip Name</Label>
-            <Input className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm" value={name} onChange={e => setName(e.target.value)} required />
+            <Input className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500" value={name} onChange={e => setName(e.target.value)} required />
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Destination</Label>
-            <Input className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm" value={destination} onChange={e => setDestination(e.target.value)} required />
+            <Input className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm transition-all focus:border-teal-500" value={destination} onChange={e => setDestination(e.target.value)} required />
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1137,7 +1137,7 @@ function EditTripDialog({ firestore, trip }: any) {
                   const val = e.target.value;
                   if (val) setStartDate(new Date(val));
                 }}
-                className="w-full bg-black/40 border border-white/5 h-11 sm:h-12 rounded-xl px-4 text-white focus:border-teal-500 outline-none appearance-none cursor-pointer text-sm"
+                className="w-full bg-black/40 border border-white/5 h-11 sm:h-12 rounded-xl px-4 text-white focus:border-teal-500 outline-none appearance-none cursor-pointer text-sm transition-all"
                 style={{ colorScheme: "dark" }}
                 required
               />
@@ -1152,14 +1152,14 @@ function EditTripDialog({ firestore, trip }: any) {
                   const val = e.target.value;
                   if (val) setEndDate(new Date(val));
                 }}
-                className="w-full bg-black/40 border border-white/5 h-11 sm:h-12 rounded-xl px-4 text-white focus:border-teal-500 outline-none appearance-none cursor-pointer text-sm"
+                className="w-full bg-black/40 border border-white/5 h-11 sm:h-12 rounded-xl px-4 text-white focus:border-teal-500 outline-none appearance-none cursor-pointer text-sm transition-all"
                 style={{ colorScheme: "dark" }}
                 required
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full h-12 sm:h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg shadow-xl shadow-teal-500/20" disabled={isSubmitting}>
+          <Button type="submit" className="w-full h-12 sm:h-14 bg-teal-500 hover:bg-teal-600 rounded-2xl font-black text-lg shadow-xl shadow-teal-500/20 transition-all hover:scale-[1.02] active:scale-95" disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </form>
