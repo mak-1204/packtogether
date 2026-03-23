@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Wallet, Loader2, Compass, Mail, ArrowRight } from 'lucide-react';
+import { Calendar, Wallet, Loader2, Compass, Mail, ArrowRight, UserPlus } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -44,16 +44,20 @@ export default function JoinTripPage() {
       router.push(`/trip/${tripId}`);
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not join trip.' });
-    } finally {
       setIsJoining(false);
     }
   };
 
   useEffect(() => {
     if (user && trip && !isJoining) {
-      handleJoin();
+      // Check if already a member to avoid redundant join toast
+      if (trip.members && trip.members[user.uid]) {
+        router.push(`/trip/${tripId}`);
+      } else {
+        handleJoin();
+      }
     }
-  }, [user, trip]);
+  }, [user, trip, isJoining, tripId, router]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -101,8 +105,11 @@ export default function JoinTripPage() {
         </div>
         <CardContent className="p-8 space-y-8">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-black text-white">You've been invited! ✈️</h2>
-            <p className="text-zinc-500 text-sm font-medium">Sign in to join the gang and see the full plan.</p>
+            <div className="w-12 h-12 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <UserPlus className="w-6 h-6 text-teal-500" />
+            </div>
+            <h2 className="text-2xl font-black text-white">Join the gang! ✈️</h2>
+            <p className="text-zinc-500 text-sm font-medium">Sign in to collaborate on the plan for {trip.destination}.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4 bg-black/20 p-5 rounded-3xl border border-white/5">

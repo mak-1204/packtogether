@@ -52,7 +52,7 @@ import {
 import { 
   CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
   Plus, MapPin, CheckCircle2, Trash2, 
-  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft
+  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft, UserPlus
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -1069,10 +1069,19 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { fire
   const chartData = categories.map(cat => ({
     name: cat.charAt(0).toUpperCase() + cat.slice(1),
     actual: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0),
-    planned: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0),
+    planned: (itinerary || []).filter((i: any) => i.category === cat).reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0),
   })).filter(d => d.actual > 0 || d.planned > 0);
 
   const pieData = chartData.map((d, i) => ({ name: d.name, value: d.actual }));
+
+  const handleShareInvite = () => {
+    const shareLink = `${window.location.origin}/join/${trip.id}`;
+    navigator.clipboard.writeText(shareLink);
+    toast({ 
+      title: 'Invite Link Copied! ✈️', 
+      description: 'Send this to your friends to invite them to the gang.' 
+    });
+  };
 
   return (
     <div className="space-y-12 pb-32">
@@ -1137,7 +1146,17 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { fire
       </div>
 
       <div className="space-y-6">
-        <h3 className="font-black text-white text-2xl tracking-tighter px-2">The Travel Crew</h3>
+        <div className="flex items-center justify-between px-2">
+          <h3 className="font-black text-white text-2xl tracking-tighter">The Travel Crew</h3>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-teal-500 hover:text-teal-400 font-black uppercase tracking-widest text-[10px] gap-2"
+            onClick={handleShareInvite}
+          >
+            <UserPlus className="w-3.5 h-3.5" /> Invite
+          </Button>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           {members?.map((m: any) => (
             <div key={m.id} className="flex items-center gap-4 p-4 rounded-[2rem] bg-white/[0.03] border border-white/5 shadow-xl backdrop-blur-md transition-all hover:bg-white/[0.06]">
@@ -1157,10 +1176,14 @@ function SummaryTab({ firestore, trip, itinerary, members, isOrganizer }: { fire
       </div>
 
       <div className="space-y-4 pt-10 px-2">
-        <Button variant="outline" className="w-full gap-4 py-10 rounded-[2.5rem] bg-white/[0.03] border-white/10 text-white font-black text-lg hover:bg-white/10 transition-all shadow-2xl active:scale-95" onClick={() => {
-          navigator.clipboard.writeText(`${window.location.origin}/view/${trip.id}`);
-          toast({ title: 'Public Link Copied!' });
-        }}>
+        <Button 
+          variant="outline" 
+          className="w-full gap-4 py-10 rounded-[2.5rem] bg-white/[0.03] border-white/10 text-white font-black text-lg hover:bg-white/10 transition-all shadow-2xl active:scale-95" 
+          onClick={() => {
+            navigator.clipboard.writeText(`${window.location.origin}/view/${trip.id}`);
+            toast({ title: 'Public Link Copied!' });
+          }}
+        >
           <Share2 className="w-7 h-7" /> Share Itinerary
         </Button>
         {isOrganizer && trip.status !== 'Completed' && (
