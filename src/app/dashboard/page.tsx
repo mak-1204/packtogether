@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
-  Plus, LogOut, Plane, MapPin, Users, Calendar, Wallet, Copy, Compass, Loader2, Trash2 
+  Plus, LogOut, Plane, MapPin, Users, Calendar, Wallet, Copy, Compass, Loader2, Trash2, Share2 
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -112,6 +112,15 @@ export default function DashboardPage() {
     }
   };
 
+  const handleShare = (tripId: string, destination: string) => {
+    const shareLink = `${window.location.origin}/join/${tripId}`;
+    navigator.clipboard.writeText(shareLink);
+    toast({ 
+      title: "Link Copied!", 
+      description: `Share this link with your gang to join the trip to ${destination}.` 
+    });
+  };
+
   const firstName = userProfile?.firstName || user.displayName?.split(" ")[0] || 'Traveler';
 
   return (
@@ -182,32 +191,6 @@ export default function DashboardPage() {
                     <p className="text-zinc-300 text-sm font-medium opacity-80">{trip.name}</p>
                   </div>
                   <div className="absolute top-4 right-6 flex gap-2">
-                    {trip.organizerId === user.uid && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-black/40 text-white hover:bg-red-500 rounded-lg transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-[#0F172A] border-white/10 rounded-[2rem]">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-white font-black text-xl">Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription className="text-zinc-400">
-                              This will permanently delete the trip to {trip.destination}. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl">Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeleteTrip(trip.id)}
-                              className="bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold"
-                            >
-                              Delete Trip
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
                     <Badge className="bg-[#0D9488] text-white font-black px-3 py-1 border-none shadow-lg">
                       {trip.status}
                     </Badge>
@@ -232,21 +215,63 @@ export default function DashboardPage() {
                       <span className="truncate">{trip.vibe}</span>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <Link href={`/trip/${trip.id}`} className="flex-1">
+                  <div className="flex gap-2 flex-wrap">
+                    <Link href={`/trip/${trip.id}`} className="flex-1 min-w-[120px]">
                       <Button className="w-full bg-[#0D9488] hover:bg-[#0D9488]/90 font-black rounded-xl h-12 transition-all active:scale-95 shadow-lg shadow-[#0D9488]/10">
                         Open Trip
                       </Button>
                     </Link>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="border-white/10 bg-transparent hover:bg-white/5 rounded-xl h-12 w-12 transition-all active:scale-90"
-                      title="Use as Template"
-                      onClick={() => handleCloneTemplate(trip)}
-                    >
-                      <Copy className="w-5 h-5 text-zinc-400" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="border-white/10 bg-transparent hover:border-[#0D9488] hover:bg-[#0D9488]/10 rounded-xl h-12 w-12 transition-all active:scale-90"
+                        title="Share Trip Link"
+                        onClick={() => handleShare(trip.id, trip.destination)}
+                      >
+                        <Share2 className="w-5 h-5 text-[#0D9488]" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="border-white/10 bg-transparent hover:bg-white/5 rounded-xl h-12 w-12 transition-all active:scale-90"
+                        title="Use as Template"
+                        onClick={() => handleCloneTemplate(trip)}
+                      >
+                        <Copy className="w-5 h-5 text-zinc-400" />
+                      </Button>
+                      {trip.organizerId === user.uid && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="border-white/10 bg-transparent hover:bg-red-500/10 hover:border-red-500 rounded-xl h-12 w-12 transition-all active:scale-90"
+                              title="Delete Trip"
+                            >
+                              <Trash2 className="w-5 h-5 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-[#0F172A] border-white/10 rounded-[2rem]">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-white font-black text-xl">Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-zinc-400">
+                                This will permanently delete the trip to {trip.destination}. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl">Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteTrip(trip.id)}
+                                className="bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold"
+                              >
+                                Delete Trip
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
