@@ -64,7 +64,7 @@ import {
 import { 
   CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
   Plus, MapPin, CheckCircle2, Trash2, 
-  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft, UserPlus, UserCog, UserMinus, Wallet, Users
+  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft, UserPlus, UserCog, UserMinus, Wallet, Users, AlertTriangle, Car
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -211,7 +211,7 @@ export default function TripDetailsPage() {
             <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isAdmin={isAdmin} isMember={isMember} />
           </TabsContent>
           <TabsContent value="checklist" className="mt-0 outline-none pb-24 px-4 pt-6">
-            <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isMember={isMember} />
+            <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isMember={isMember} isOrganizer={isOrganizer} />
           </TabsContent>
           <TabsContent value="suggestions" className="mt-0 outline-none pb-24 px-4 pt-6">
             <SuggestionsTab firestore={firestore} trip={trip} suggestions={suggestions} isMember={isMember} isAdmin={isAdmin} />
@@ -349,16 +349,7 @@ function ItineraryTab({ firestore, trip, itinerary, isAdmin, isMember }: any) {
 
 function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }: any) {
   const [actual, setActual] = useState(item.actualBudget?.toString() || '');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [newLink, setNewLink] = useState('');
-  const [newNote, setNewNote] = useState('');
   const { user } = useUser();
-
-  const suggestionsRef = useMemoFirebase(() => {
-    return query(collection(firestore, 'trips', tripId, 'itineraryItems', item.id, 'suggestions'), orderBy('addedAt', 'desc'));
-  }, [firestore, tripId, item.id]);
-
-  const { data: suggestions } = useCollection(suggestionsRef);
 
   const handleUpdateBudget = () => {
     const amount = Number(actual);
@@ -366,40 +357,6 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
       updateActualBudget(firestore, tripId, item.id, amount);
       toast({ title: 'Budget Updated' });
     }
-  };
-
-  const handleAddSuggestion = async () => {
-    if (!newLink) return;
-    addItemSuggestion(firestore, tripId, item.id, {
-      link: newLink,
-      notes: newNote,
-      addedBy: user?.displayName || 'Member'
-    });
-    setNewLink('');
-    setNewNote('');
-    toast({ title: 'Suggestion Added!' });
-  };
-
-  const handleAiRecommend = async () => {
-    if (!suggestions || suggestions.length < 2) return;
-    toast({ title: 'AI is thinking...' });
-    const input = {
-      groupPreferences: `Trip to ${item.name}. Vibe is fun and collaborative.`,
-      suggestions: suggestions.map((s: any) => ({
-        link: s.link,
-        notes: s.notes,
-        addedBy: s.addedBy
-      }))
-    };
-    const result = await aiTripSuggestionRecommendation(input);
-    const recommended = suggestions[result.recommendedSuggestionIndex];
-    markItemSuggestionAiPick(firestore, tripId, item.id, recommended.id, result.aiReason);
-    toast({ title: 'AI Picked!', description: recommended.link });
-  };
-
-  const handleDeleteSuggestion = (suggestionId: string) => {
-    deleteItemSuggestion(firestore, tripId, item.id, suggestionId);
-    toast({ title: 'Suggestion removed' });
   };
 
   return (
@@ -540,88 +497,97 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
   );
 }
 
-function ChecklistTab({ firestore, trip, itinerary, isMember }: any) {
-  const travelItems = itinerary?.filter((i: any) => i.category === 'transport' || i.category === 'travel') || [];
+function ChecklistTab({ firestore, trip, itinerary, isMember, isOrganizer }: any) {
+  const checklistItems = itinerary?.filter((item: any) => item.checklist && item.checklist.length > 0) || [];
+  
+  const tripStartsSoon = trip?.startDate && 
+    toDate(trip.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000;
+
+  const hasRedItems = checklistItems.some((item: any) => 
+    item.checklist.some((c: any) => c.status === "red")
+  );
+
+  const handleCycleStatus = (itemId: string, index: number, currentStatus: string) => {
+    if (!isOrganizer) return;
+    updateChecklistItemStatus(firestore, trip.id, itemId, index, currentStatus);
+  };
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Pre-trip Checklist</h2>
-      {travelItems.length === 0 ? (
+      
+      {tripStartsSoon && hasRedItems && (
+        <div className="bg-red-500/20 border border-red-500 rounded-xl px-4 py-3 mb-4 flex items-center gap-2 animate-in fade-in duration-500">
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+          <p className="text-red-400 text-sm font-medium">
+            Trip starts soon! Some checklist items still need attention.
+          </p>
+        </div>
+      )}
+
+      {checklistItems.length === 0 ? (
         <Card className="bg-white/5 border-white/5 p-12 text-center rounded-[2rem] sm:rounded-[2.5rem]">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckSquare className="w-8 h-8 sm:w-10 sm:h-10 text-teal-500" />
           </div>
-          <p className="text-zinc-400 font-bold text-sm sm:text-base">No travel legs yet. Add flights or trains in the itinerary.</p>
+          <p className="text-zinc-400 font-bold text-sm sm:text-base">No checklist items yet.</p>
+          <p className="text-zinc-500 text-xs mt-2">Add travel legs or stays in the Plan tab to see their checklist here.</p>
         </Card>
       ) : (
         <div className="space-y-8">
-          {travelItems.map((item: any) => (
+          {checklistItems.map((item: any) => (
             <div key={item.id} className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500 shrink-0">
-                  {item.category === 'travel' ? <Plane className="w-4 h-4" /> : <Bus className="w-4 h-4" />}
+                <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-teal-500 shrink-0">
+                  {item.mode === "train" ? <Train className="w-4 h-4" /> :
+                   item.mode === "flight" ? <Plane className="w-4 h-4" /> :
+                   item.mode === "bus" ? <Bus className="w-4 h-4" /> :
+                   item.mode === "roadtrip" ? <Car className="w-4 h-4" /> :
+                   item.category === "stay" ? <MapPin className="w-4 h-4" /> : <CheckSquare className="w-4 h-4" />}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-black text-white truncate">{item.name}</h3>
                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Day {item.dayNumber}</p>
                 </div>
+                <div className="shrink-0">
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                    {item.checklist.filter((c: any) => c.status === "green").length}/{item.checklist.length} done
+                  </span>
+                </div>
               </div>
-              <ChecklistItemsList firestore={firestore} tripId={trip.id} itemId={item.id} isMember={isMember} />
+              
+              <div className="bg-white/5 rounded-[1.5rem] overflow-hidden">
+                {item.checklist.map((check: any, index: number) => (
+                  <div key={index} className="flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-none group">
+                    <button 
+                      onClick={() => handleCycleStatus(item.id, index, check.status)}
+                      className={cn(
+                        "w-5 h-5 rounded-full flex-shrink-0 transition-all",
+                        check.status === "green" ? "bg-teal-500" :
+                        check.status === "yellow" ? "bg-amber-500" : "bg-red-500",
+                        isOrganizer ? "cursor-pointer active:scale-90" : "cursor-default"
+                      )}
+                    />
+                    <span className={cn(
+                      "flex-1 text-xs font-bold transition-all truncate",
+                      check.status === "green" ? "text-zinc-600 line-through" : "text-zinc-300"
+                    )}>
+                      {check.item}
+                    </span>
+                    <span className={cn(
+                      "text-[9px] font-black uppercase tracking-widest shrink-0",
+                      check.status === "green" ? "text-teal-500" :
+                      check.status === "yellow" ? "text-amber-500" : "text-red-500"
+                    )}>
+                      {check.status === "green" ? "DONE" : check.status === "yellow" ? "PENDING" : "TODO"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function ChecklistItemsList({ firestore, tripId, itemId, isMember }: any) {
-  const checklistRef = useMemoFirebase(() => {
-    return query(collection(firestore, 'trips', tripId, 'itineraryItems', itemId, 'checklistItems'), orderBy('order'));
-  }, [firestore, tripId, itemId]);
-
-  const { data: checklist } = useCollection(checklistRef);
-
-  const cycleStatus = (id: string, current: string) => {
-    if (!isMember) return;
-    const next = current === 'red' ? 'yellow' : current === 'yellow' ? 'green' : 'red';
-    updateChecklistItemStatus(firestore, tripId, itemId, id, next);
-  };
-
-  return (
-    <div className="space-y-3 pl-4 border-l border-white/5 ml-4">
-      {checklist?.map((item: any) => (
-        <div key={item.id} className="flex items-center justify-between group">
-          <div className="flex items-center gap-3 min-w-0">
-            <button 
-              onClick={() => cycleStatus(item.id, item.status)}
-              className={cn(
-                "w-5 h-5 rounded-full border-2 transition-all shrink-0",
-                item.status === 'green' ? "bg-teal-500 border-teal-500" :
-                item.status === 'yellow' ? "bg-amber-500 border-amber-500" :
-                "bg-red-500 border-red-500",
-                isMember ? "cursor-pointer hover:scale-110" : "cursor-default"
-              )}
-            >
-              {item.status === 'green' && <CheckCircle2 className="w-3 h-3 text-black mx-auto" />}
-            </button>
-            <span className={cn(
-              "text-xs font-bold transition-all truncate",
-              item.status === 'green' ? "text-zinc-600 line-through" : "text-zinc-300"
-            )}>
-              {item.description}
-            </span>
-          </div>
-          <Badge className={cn(
-            "text-[9px] font-black px-2 py-0 border-none shrink-0 ml-2",
-            item.status === 'green' ? "bg-teal-500/10 text-teal-500" :
-            item.status === 'yellow' ? "bg-amber-500/10 text-amber-500" :
-            "bg-red-500/10 text-red-500"
-          )}>
-            {item.status === 'green' ? 'DONE' : item.status === 'yellow' ? 'PEND' : 'TODO'}
-          </Badge>
-        </div>
-      ))}
     </div>
   );
 }
@@ -963,6 +929,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('other');
+  const [mode, setMode] = useState<string | undefined>(undefined);
   const [day, setDay] = useState(defaultDay?.toString() || '1');
   const [slot, setSlot] = useState('Morning');
   const [budget, setBudget] = useState('');
@@ -972,6 +939,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
     addItineraryItem(firestore, tripId, {
       name,
       category,
+      mode,
       dayNumber: Number(day),
       timeSlot: slot,
       plannedBudget: Number(budget),
@@ -982,7 +950,10 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
     setName('');
     setBudget('');
     setNotes('');
+    setMode(undefined);
   };
+
+  const showMode = category === 'travel' || category === 'transport';
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -1005,7 +976,10 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={(val) => {
+                setCategory(val);
+                if (val !== 'travel' && val !== 'transport') setMode(undefined);
+              }}>
                 <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -1019,6 +993,22 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
                 </SelectContent>
               </Select>
             </div>
+            {showMode && (
+              <div className="space-y-2">
+                <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Mode</Label>
+                <Select value={mode} onValueChange={setMode}>
+                  <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
+                    <SelectValue placeholder="Select mode" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0F172A] border-white/10 text-white">
+                    <SelectItem value="train">🚆 Train</SelectItem>
+                    <SelectItem value="flight">✈️ Flight</SelectItem>
+                    <SelectItem value="bus">🚌 Bus</SelectItem>
+                    <SelectItem value="roadtrip">🚗 Road Trip</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Planned Budget</Label>
               <Input type="number" className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm" value={budget} onChange={e => setBudget(e.target.value)} />

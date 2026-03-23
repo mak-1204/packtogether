@@ -16,6 +16,60 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 /**
+ * Generates a specific checklist based on the category and mode of travel/stay.
+ */
+function generateChecklist(category: string, mode?: string) {
+  const checklists: Record<string, { item: string, status: string }[]> = {
+    train: [
+      { item: "Tickets booked", status: "red" },
+      { item: "PNR number saved", status: "red" },
+      { item: "Confirmation status — Confirmed / RAC / Waitlist", status: "yellow" },
+      { item: "Tickets downloaded / screenshot saved", status: "red" },
+      { item: "Boarding station confirmed", status: "red" },
+      { item: "Everyone on the same booking", status: "yellow" },
+      { item: "Departure time noted by everyone", status: "red" },
+    ],
+    flight: [
+      { item: "Tickets booked", status: "red" },
+      { item: "Web check-in done", status: "red" },
+      { item: "Boarding pass downloaded", status: "red" },
+      { item: "Baggage within allowed limits", status: "yellow" },
+      { item: "Cab to airport booked", status: "red" },
+      { item: "Reach airport 2hrs before departure", status: "yellow" },
+      { item: "Passport / ID ready", status: "red" },
+    ],
+    bus: [
+      { item: "Ticket booked", status: "red" },
+      { item: "Boarding point confirmed", status: "red" },
+      { item: "Bus operator contact saved", status: "yellow" },
+      { item: "Departure time noted", status: "red" },
+      { item: "Everyone has their ticket", status: "red" },
+    ],
+    roadtrip: [
+      { item: "Vehicle confirmed", status: "red" },
+      { item: "Driver confirmed and contact saved", status: "red" },
+      { item: "Fuel checked", status: "yellow" },
+      { item: "Route saved on Google Maps", status: "yellow" },
+      { item: "Toll cash or FASTag ready", status: "yellow" },
+      { item: "Meeting point and departure time set", status: "red" },
+      { item: "Everyone knows the pickup point", status: "red" },
+    ],
+    stay: [
+      { item: "Booking confirmed", status: "red" },
+      { item: "Confirmation email / voucher saved", status: "red" },
+      { item: "Check-in time noted", status: "yellow" },
+      { item: "Check-out time noted", status: "yellow" },
+      { item: "Property contact number saved", status: "red" },
+      { item: "Address saved on Google Maps", status: "yellow" },
+      { item: "Early check-in requested if needed", status: "yellow" },
+    ],
+  };
+
+  const key = mode || category;
+  return checklists[key] || [];
+}
+
+/**
  * Creates a new trip with a pre-generated ID for optimistic navigation.
  */
 export function createTrip(db: Firestore, tripData: any, userId: string, tripId: string) {
@@ -159,9 +213,12 @@ export function removeMember(db: Firestore, tripId: string, memberId: string) {
 
 export function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
   const itemRef = doc(collection(db, 'trips', tripId, 'itineraryItems'));
+  const checklist = generateChecklist(itemData.category, itemData.mode);
+  
   const data = {
     ...itemData,
     tripId,
+    checklist,
     actualBudget: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -174,29 +231,6 @@ export function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
       requestResourceData: data,
     } satisfies SecurityRuleContext));
   });
-
-  if (itemData.category === 'travel') {
-    const checklistRef = collection(db, 'trips', tripId, 'itineraryItems', itemRef.id, 'checklistItems');
-    const defaults = ['Tickets Downloaded', 'Hotel Confirmation', 'Local Cash Ready', 'Bags Packed'];
-    
-    defaults.forEach((description, index) => {
-      const checkDocRef = doc(checklistRef);
-      const checkData = {
-        description,
-        status: 'red',
-        order: index,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-      setDoc(checkDocRef, checkData).catch(async (error) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: checkDocRef.path,
-          operation: 'create',
-          requestResourceData: checkData,
-        } satisfies SecurityRuleContext));
-      });
-    });
-  }
   
   return itemRef.id;
 }
@@ -241,18 +275,33 @@ export function deleteItineraryItem(db: Firestore, tripId: string, itemId: strin
   });
 }
 
-export function updateChecklistItemStatus(db: Firestore, tripId: string, itemId: string, checklistId: string, newStatus: string) {
-  const checkRef = doc(db, 'trips', tripId, 'itineraryItems', itemId, 'checklistItems', checklistId);
-  updateDoc(checkRef, {
-    status: newStatus,
-    updatedAt: serverTimestamp(),
-  }).catch(async (error) => {
-    errorEmitter.emit('permission-error', new FirestorePermissionError({
-      path: checkRef.path,
-      operation: 'update',
-      requestResourceData: { status: newStatus },
-    } satisfies SecurityRuleContext));
-  });
+export async function updateChecklistItemStatus(db: Firestore, tripId: string, itemId: string, checklistIndex: number, currentStatus: string) {
+  const next =
+    currentStatus === "red" ? "yellow" :
+    currentStatus === "yellow" ? "green" : "red";
+
+  const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
+  
+  try {
+    const itemSnap = await getDoc(itemRef);
+    if (!itemSnap.exists()) return;
+    
+    const checklist = [...itemSnap.data().checklist];
+    checklist[checklistIndex] = { ...checklist[checklistIndex], status: next };
+
+    updateDoc(itemRef, { 
+      checklist,
+      updatedAt: serverTimestamp()
+    }).catch(async (error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: itemRef.path,
+        operation: 'update',
+        requestResourceData: { checklist },
+      } satisfies SecurityRuleContext));
+    });
+  } catch (error) {
+    console.error("Error updating checklist status:", error);
+  }
 }
 
 export function addSuggestion(db: Firestore, tripId: string, suggestion: any) {
