@@ -198,7 +198,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {trips.map((trip) => (
               <Card key={trip.id} className="overflow-hidden border-white/5 bg-white/5 hover:bg-white/[0.08] hover:-translate-y-1.5 hover:border-[#0D9488]/30 transition-all duration-500 group rounded-[2rem] sm:rounded-[2.5rem] shadow-xl hover:shadow-[#0D9488]/5">
-                <div className="relative h-40 sm:h-48 w-full">
+                <div className="relative h-40 sm:h-48 w-full overflow-hidden">
                   <Image 
                     src={trip.coverImageUrl || `https://picsum.photos/seed/${trip.id}/400/200`} 
                     alt={trip.destination}
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="border-white/10 bg-transparent hover:bg-white/5 rounded-xl h-11 w-11 sm:h-12 sm:w-12 transition-all active:scale-90 shrink-0"
+                        className="border-white/10 bg-transparent hover:border-[#0D9488] hover:bg-[#0D9488]/10 rounded-xl h-11 w-11 sm:h-12 sm:w-12 transition-all active:scale-90 shrink-0"
                         title="Use as Template"
                         onClick={() => handleCloneTemplate(trip)}
                       >
