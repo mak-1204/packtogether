@@ -58,7 +58,7 @@ service cloud.firestore {
 
       match /itineraryItems/{itemId} {
         allow read: if true; 
-        allow write: if isSignedIn(); 
+        allow write: if isMember(get(/databases/$(database)/documents/trips/$(tripId)).data); 
         
         match /checklistItems/{checklistItemId} {
            allow read: if true;

@@ -195,7 +195,7 @@ export default function TripDetailsPage() {
       <main className="container max-w-lg mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="itinerary" className="mt-0 outline-none">
-            <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
+            <ItineraryTab firestore={firestore} trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} isMember={isMember} />
           </TabsContent>
           <TabsContent value="checklist" className="mt-0 outline-none">
             <ChecklistTab firestore={firestore} trip={trip} itinerary={itinerary} isOrganizer={isOrganizer} />
@@ -238,14 +238,14 @@ export default function TripDetailsPage() {
   );
 }
 
-function ItineraryTab({ firestore, trip, itinerary, isOrganizer }: any) {
+function ItineraryTab({ firestore, trip, itinerary, isOrganizer, isMember }: any) {
   const days = Array.from({ length: Math.ceil((toDate(trip.endDate).getTime() - toDate(trip.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1 }, (_, i) => i + 1);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-3xl font-black tracking-tight">Itinerary</h2>
-        {isOrganizer && <AddItineraryDialog firestore={firestore} tripId={trip.id} days={days} />}
+        {isMember && <AddItineraryDialog firestore={firestore} tripId={trip.id} days={days} />}
       </div>
       
       {itinerary?.length === 0 ? (
@@ -280,7 +280,7 @@ function ItineraryTab({ firestore, trip, itinerary, isOrganizer }: any) {
                   {dayItems.length === 0 ? (
                     <div className="text-center py-10 space-y-4">
                       <p className="text-zinc-500 font-bold italic">No activities planned for this day.</p>
-                      {isOrganizer && <AddItineraryDialog firestore={firestore} tripId={trip.id} days={[dayNum]} defaultDay={dayNum} />}
+                      {isMember && <AddItineraryDialog firestore={firestore} tripId={trip.id} days={[dayNum]} defaultDay={dayNum} />}
                     </div>
                   ) : (
                     TIME_SLOTS.map(slot => {
