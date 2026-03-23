@@ -362,8 +362,8 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
   return (
     <div className="flex items-center gap-2 py-3 border-b border-slate-800 last:border-none">
       <div className="shrink-0 w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500">
-        {item.category === 'transport' ? <Bus className="w-5 h-5" /> :
-         item.category === 'travel' ? <Plane className="w-5 h-5" /> :
+        {item.category === 'transit' ? <Bus className="w-5 h-5" /> :
+         item.category === 'journey' ? <Plane className="w-5 h-5" /> :
          item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
          item.category === 'stay' ? <MapPin className="w-5 h-5" /> :
          <Sparkles className="w-5 h-5" />}
@@ -390,7 +390,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg shrink-0"
+              className="h-8 w-8 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg shrink-0"
               onClick={() => deleteItineraryItem(firestore, tripId, item.id)}
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -406,6 +406,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(item.name || '');
   const [category, setCategory] = useState(item.category || 'other');
+  const [mode, setMode] = useState<string | undefined>(item.mode);
   const [day, setDay] = useState(item.dayNumber?.toString() || '1');
   const [slot, setSlot] = useState(item.timeSlot || 'Morning');
   const [budget, setBudget] = useState(item.plannedBudget?.toString() || '');
@@ -415,6 +416,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
     updateItineraryItem(firestore, tripId, item.id, {
       name,
       category,
+      mode: (category === 'journey' || category === 'transit') ? mode : undefined,
       dayNumber: Number(day),
       timeSlot: slot,
       plannedBudget: Number(budget),
@@ -424,10 +426,12 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
     toast({ title: 'Activity Updated!' });
   };
 
+  const showMode = category === 'journey' || category === 'transit';
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-teal-500 hover:bg-teal-500/10 rounded-lg shrink-0">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-600 hover:text-teal-500 hover:bg-teal-500/10 rounded-lg shrink-0">
           <Edit className="w-3.5 h-3.5" />
         </Button>
       </DialogTrigger>
@@ -443,20 +447,39 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={(val) => {
+                setCategory(val);
+                if (val !== 'journey' && val !== 'transit') setMode(undefined);
+              }}>
                 <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
                   <SelectItem value="stay">🏨 Stay</SelectItem>
-                  <SelectItem value="travel">✈️ Journey</SelectItem>
-                  <SelectItem value="transport">🚗 Local Transit</SelectItem>
+                  <SelectItem value="journey">✈️ Journey</SelectItem>
+                  <SelectItem value="transit">🚗 Local Transit</SelectItem>
                   <SelectItem value="food">🍱 Food</SelectItem>
                   <SelectItem value="activity">🎭 Activity</SelectItem>
                   <SelectItem value="other">✨ Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {showMode && (
+              <div className="space-y-2">
+                <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Mode</Label>
+                <Select value={mode} onValueChange={setMode}>
+                  <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
+                    <SelectValue placeholder="Select mode" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0F172A] border-white/10 text-white">
+                    <SelectItem value="train">🚆 Train</SelectItem>
+                    <SelectItem value="flight">✈️ Flight</SelectItem>
+                    <SelectItem value="bus">🚌 Bus</SelectItem>
+                    <SelectItem value="roadtrip">🚗 Road Trip</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Planned Budget</Label>
               <Input type="number" className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm" value={budget} onChange={e => setBudget(e.target.value)} />
@@ -939,7 +962,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
     addItineraryItem(firestore, tripId, {
       name,
       category,
-      mode,
+      mode: (category === 'journey' || category === 'transit') ? mode : undefined,
       dayNumber: Number(day),
       timeSlot: slot,
       plannedBudget: Number(budget),
@@ -953,7 +976,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
     setMode(undefined);
   };
 
-  const showMode = category === 'travel' || category === 'transport';
+  const showMode = category === 'journey' || category === 'transit';
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -978,15 +1001,15 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
               <Label className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Category</Label>
               <Select value={category} onValueChange={(val) => {
                 setCategory(val);
-                if (val !== 'travel' && val !== 'transport') setMode(undefined);
+                if (val !== 'journey' && val !== 'transit') setMode(undefined);
               }}>
                 <SelectTrigger className="bg-black/40 border-white/5 h-11 sm:h-12 rounded-xl text-white font-bold text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F172A] border-white/10 text-white">
                   <SelectItem value="stay">🏨 Stay</SelectItem>
-                  <SelectItem value="travel">✈️ Journey</SelectItem>
-                  <SelectItem value="transport">🚗 Local Transit</SelectItem>
+                  <SelectItem value="journey">✈️ Journey</SelectItem>
+                  <SelectItem value="transit">🚗 Local Transit</SelectItem>
                   <SelectItem value="food">🍱 Food</SelectItem>
                   <SelectItem value="activity">🎭 Activity</SelectItem>
                   <SelectItem value="other">✨ Other</SelectItem>

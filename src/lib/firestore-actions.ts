@@ -16,6 +16,15 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 /**
+ * Utility to remove undefined properties from an object before sending to Firestore.
+ */
+function cleanData(data: any) {
+  const cleaned = { ...data };
+  Object.keys(cleaned).forEach(key => cleaned[key] === undefined && delete cleaned[key]);
+  return cleaned;
+}
+
+/**
  * Generates a specific checklist based on the category and mode of travel/stay.
  */
 function generateChecklist(category: string, mode?: string) {
@@ -74,7 +83,7 @@ function generateChecklist(category: string, mode?: string) {
  */
 export function createTrip(db: Firestore, tripData: any, userId: string, tripId: string) {
   const tripRef = doc(db, 'trips', tripId);
-  const data = {
+  const data = cleanData({
     ...tripData,
     startDate: tripData.startDate instanceof Date 
       ? Timestamp.fromDate(tripData.startDate) 
@@ -89,7 +98,7 @@ export function createTrip(db: Firestore, tripData: any, userId: string, tripId:
     totalActualBudget: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  };
+  });
 
   setDoc(tripRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -104,12 +113,12 @@ export function createTrip(db: Firestore, tripData: any, userId: string, tripId:
 
 export function updateTripDetails(db: Firestore, tripId: string, data: any) {
   const tripRef = doc(db, 'trips', tripId);
-  const updateData = {
+  const updateData = cleanData({
     ...data,
     startDate: data.startDate instanceof Date ? Timestamp.fromDate(data.startDate) : data.startDate,
     endDate: data.endDate instanceof Date ? Timestamp.fromDate(data.endDate) : data.endDate,
     updatedAt: serverTimestamp(),
-  };
+  });
   
   updateDoc(tripRef, updateData).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -140,12 +149,12 @@ export async function joinTrip(db: Firestore, tripId: string, memberData: { name
   const memberSnap = await getDoc(memberDocRef);
   
   if (!memberSnap.exists()) {
-    const data = {
+    const data = cleanData({
       ...memberData,
       tripId,
       role: 'member',
       joinedAt: serverTimestamp(),
-    };
+    });
 
     setDoc(memberDocRef, data).catch(async (error) => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -215,14 +224,14 @@ export function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
   const itemRef = doc(collection(db, 'trips', tripId, 'itineraryItems'));
   const checklist = generateChecklist(itemData.category, itemData.mode);
   
-  const data = {
+  const data = cleanData({
     ...itemData,
     tripId,
     checklist,
     actualBudget: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  };
+  });
 
   setDoc(itemRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -237,10 +246,10 @@ export function addItineraryItem(db: Firestore, tripId: string, itemData: any) {
 
 export function updateItineraryItem(db: Firestore, tripId: string, itemId: string, itemData: any) {
   const itemRef = doc(db, 'trips', tripId, 'itineraryItems', itemId);
-  const data = {
+  const data = cleanData({
     ...itemData,
     updatedAt: serverTimestamp(),
-  };
+  });
 
   updateDoc(itemRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -306,12 +315,12 @@ export async function updateChecklistItemStatus(db: Firestore, tripId: string, i
 
 export function addSuggestion(db: Firestore, tripId: string, suggestion: any) {
   const suggestionRef = doc(collection(db, 'trips', tripId, 'suggestions'));
-  const data = {
+  const data = cleanData({
     ...suggestion,
     tripId,
     isAiRecommended: false,
     createdAt: serverTimestamp(),
-  };
+  });
   
   setDoc(suggestionRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -327,12 +336,12 @@ export function addSuggestion(db: Firestore, tripId: string, suggestion: any) {
  */
 export function addItemSuggestion(db: Firestore, tripId: string, itemId: string, suggestionData: any) {
   const suggestionRef = doc(collection(db, 'trips', tripId, 'itineraryItems', itemId, 'suggestions'));
-  const data = {
+  const data = cleanData({
     ...suggestionData,
     addedAt: serverTimestamp(),
     aiRecommended: false,
     aiReason: "",
-  };
+  });
 
   setDoc(suggestionRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -376,13 +385,13 @@ export function markItemSuggestionAiPick(db: Firestore, tripId: string, itemId: 
 
 export function addPackingItem(db: Firestore, tripId: string, item: any) {
   const packingRef = doc(collection(db, 'trips', tripId, 'packingItems'));
-  const data = {
+  const data = cleanData({
     ...item,
     tripId,
     isPacked: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  };
+  });
   
   setDoc(packingRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
