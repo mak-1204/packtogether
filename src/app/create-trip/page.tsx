@@ -39,7 +39,8 @@ function CreateTripContent() {
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/auth');
+      router.push('/');
+      return;
     }
   }, [user, isUserLoading, router]);
 
@@ -170,7 +171,6 @@ function CreateTripContent() {
     <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4 relative">
       <Link href="/dashboard" className="absolute top-8 left-8 flex items-center gap-2 group text-zinc-400 hover:text-white transition-colors">
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="text-sm font-bold uppercase tracking-widest">Back</span>
       </Link>
 
       <Link href="/dashboard" className="mb-8 flex items-center gap-2">

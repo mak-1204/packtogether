@@ -5,13 +5,33 @@ import { Button } from '@/components/ui/button';
 import { useSlideshow } from '@/hooks/useSlideshow';
 import { KENBURNS_SCALE } from '@/lib/slides';
 import Link from 'next/link';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function Hero() {
   const { slides, currentSlide, currentIndex, transitioning, slidesLoading, zoomProgress } = useSlideshow();
+  const { user } = useUser();
+  const router = useRouter();
 
   // Calculate current scale based on RAF-driven progress
   const ZOOM_SCALE_START = 1.0;
   const currentScale = ZOOM_SCALE_START + (KENBURNS_SCALE - ZOOM_SCALE_START) * zoomProgress;
+
+  const handleCreateTrip = () => {
+    if (user) {
+      router.push('/create-trip');
+    } else {
+      router.push('/auth?redirect=/create-trip');
+    }
+  };
+
+  const handleMyTrips = () => {
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      router.push('/auth');
+    }
+  };
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#0F172A]">
@@ -77,16 +97,21 @@ export default function Hero() {
           Stop planning trips on WhatsApp. PackTogether gives your friend group one place to plan, decide, and track — together.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <Link href="/create-trip">
-            <Button size="lg" className="bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg px-8 h-14 rounded-full font-bold w-full sm:w-auto">
-              Create a Trip
-            </Button>
-          </Link>
-          <Link href="/dashboard">
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8 h-14 rounded-full font-bold w-full sm:w-auto">
-              My Trips
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleCreateTrip}
+            size="lg" 
+            className="bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg px-8 h-14 rounded-full font-bold w-full sm:w-auto shadow-2xl shadow-[#0D9488]/20"
+          >
+            Create a Trip
+          </Button>
+          <Button 
+            onClick={handleMyTrips}
+            size="lg" 
+            variant="outline" 
+            className="border-white text-white hover:bg-white/10 text-lg px-8 h-14 rounded-full font-bold w-full sm:w-auto"
+          >
+            My Trips
+          </Button>
         </div>
       </div>
 

@@ -39,7 +39,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/auth');
+      router.push('/');
       return;
     }
 
@@ -75,15 +75,20 @@ export default function DashboardPage() {
 
   const { data: trips, isLoading: isTripsLoading } = useCollection(tripsQuery);
 
-  if (isUserLoading || !user || sessionStorage.getItem("pendingJoinTripId")) {
+  if (isUserLoading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]">
-        <Loader2 className="animate-spin" />
+        <Loader2 className="animate-spin w-12 h-12" />
       </div>
     );
   }
 
-  const handleLogout = () => signOut(auth).then(() => router.push('/'));
+  if (!user) return null;
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
+  };
 
   const handleCloneTemplate = async (trip: any) => {
     if (!firestore || !user) return;
@@ -137,7 +142,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#0F172A] text-white pb-24 selection:bg-[#0D9488] selection:text-white">
       <header className="border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-lg sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between px-4 mx-auto max-w-7xl">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Compass className="w-8 h-8 text-[#0D9488]" />
             <span className="text-xl font-black tracking-tighter">PackTogether</span>
           </Link>

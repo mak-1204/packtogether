@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { Compass, Loader2, ArrowLeft, User, Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
-export default function AuthPage() {
+function AuthForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -22,17 +22,22 @@ export default function AuthPage() {
   const auth = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (user) {
+      const redirect = searchParams.get('redirect');
       const pendingJoin = sessionStorage.getItem("pendingJoinTripId");
+      
       if (pendingJoin) {
         router.push(`/join/${pendingJoin}`);
+      } else if (redirect) {
+        router.push(redirect);
       } else {
         router.push('/dashboard');
       }
     }
-  }, [user, router]);
+  }, [user, router, searchParams]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -165,5 +170,13 @@ export default function AuthPage() {
         Secured by PackTogether Identity System
       </p>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-[#0D9488]"><Loader2 className="animate-spin w-12 h-12" /></div>}>
+      <AuthForm />
+    </Suspense>
   );
 }
