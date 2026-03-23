@@ -22,7 +22,8 @@ import {
   updateMemberRole,
   removeMember,
   deleteSuggestion,
-  deleteItemSuggestion
+  deleteItemSuggestion,
+  resetAllChecklists
 } from '@/lib/firestore-actions';
 import { aiTripSuggestionRecommendation } from '@/ai/flows/ai-trip-suggestion-recommendation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -64,7 +65,7 @@ import {
 import { 
   CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
   Plus, MapPin, CheckCircle2, Trash2, 
-  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft, UserPlus, UserCog, UserMinus, Wallet, Users, AlertTriangle, Car
+  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon, ArrowLeft, UserPlus, UserCog, UserMinus, Wallet, Users, AlertTriangle, Car, RefreshCw
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -362,7 +363,7 @@ function ItineraryItemCard({ firestore, tripId, item, isMember, isAdmin, days }:
   return (
     <div className="flex items-center gap-2 py-3 border-b border-slate-800 last:border-none">
       <div className="shrink-0 w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500">
-        {item.category === 'transit' ? <Bus className="w-5 h-5" /> :
+        {item.category === 'transit' ? <Car className="w-5 h-5" /> :
          item.category === 'journey' ? <Plane className="w-5 h-5" /> :
          item.category === 'food' ? <Sparkles className="w-5 h-5" /> :
          item.category === 'stay' ? <MapPin className="w-5 h-5" /> :
@@ -476,6 +477,7 @@ function EditItineraryDialog({ firestore, tripId, item, days }: any) {
                     <SelectItem value="flight">✈️ Flight</SelectItem>
                     <SelectItem value="bus">🚌 Bus</SelectItem>
                     <SelectItem value="roadtrip">🚗 Road Trip</SelectItem>
+                    <SelectItem value="cab">🚕 Cab</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -565,7 +567,7 @@ function ChecklistTab({ firestore, trip, itinerary, isMember, isOrganizer }: any
                   {item.mode === "train" ? <Train className="w-4 h-4" /> :
                    item.mode === "flight" ? <Plane className="w-4 h-4" /> :
                    item.mode === "bus" ? <Bus className="w-4 h-4" /> :
-                   item.mode === "roadtrip" ? <Car className="w-4 h-4" /> :
+                   item.mode === "roadtrip" || item.mode === "cab" ? <Car className="w-4 h-4" /> :
                    item.category === "stay" ? <MapPin className="w-4 h-4" /> : <CheckSquare className="w-4 h-4" />}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -681,9 +683,7 @@ function SuggestionsTab({ firestore, trip, suggestions, isMember, isAdmin }: any
                   {s.isAiRecommended && <Badge className="bg-amber-500 text-black font-black px-2 py-0.5 border-none text-[8px] sm:text-[10px]">AI PICK</Badge>}
                   {isMember && (
                     <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                      variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                       onClick={() => handleDelete(s.id)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -797,6 +797,8 @@ function PackingTab({ firestore, trip, packing, isMember }: any) {
 }
 
 function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, isOrganizer }: any) {
+  const [isResetting, setIsResetting] = useState(false);
+  
   const totalPlanned = itinerary?.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0;
   const totalActual = itinerary?.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0;
 
@@ -812,6 +814,19 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
     const link = `${window.location.origin}/join/${trip.id}`;
     navigator.clipboard.writeText(link);
     toast({ title: 'Link Copied!', description: 'Share this with your gang.' });
+  };
+
+  const handleResetChecklists = async () => {
+    if (!isOrganizer) return;
+    setIsResetting(true);
+    try {
+      await resetAllChecklists(firestore, trip.id);
+      toast({ title: "Checklists Simplified!", description: "All trip tasks have been updated." });
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Reset Failed", description: "Try again later." });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -927,23 +942,35 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
         </Card>
       </div>
 
-      {isMember && (
-        <Button 
-          className="w-full h-14 sm:h-16 bg-white/5 hover:bg-white/10 text-zinc-400 font-black rounded-2xl sm:rounded-3xl gap-3 text-xs sm:text-sm uppercase tracking-widest border border-white/5 active:scale-95 transition-all"
-          onClick={handleShare}
-        >
-          <Share2 className="w-5 h-5" /> Share Invite Link
-        </Button>
-      )}
+      <div className="flex flex-col gap-3">
+        {isMember && (
+          <Button 
+            className="w-full h-14 sm:h-16 bg-white/5 hover:bg-white/10 text-zinc-400 font-black rounded-2xl sm:rounded-3xl gap-3 text-xs sm:text-sm uppercase tracking-widest border border-white/5 active:scale-95 transition-all"
+            onClick={handleShare}
+          >
+            <Share2 className="w-5 h-5" /> Share Invite Link
+          </Button>
+        )}
 
-      {isMember && trip.status !== 'Completed' && (
-        <Button 
-          className="w-full h-14 sm:h-16 bg-teal-500 hover:bg-teal-600 text-black font-black rounded-2xl sm:rounded-3xl gap-3 text-base sm:text-lg shadow-xl shadow-teal-500/20 active:scale-95 transition-all"
-          onClick={() => markTripComplete(firestore, trip.id)}
-        >
-          <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> Complete Trip
-        </Button>
-      )}
+        {isOrganizer && !trip.checklistsReset && (
+          <Button 
+            className="w-full h-14 sm:h-16 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-black rounded-2xl sm:rounded-3xl gap-3 text-xs sm:text-sm uppercase tracking-widest border border-amber-500/20 active:scale-95 transition-all"
+            onClick={handleResetChecklists}
+            disabled={isResetting}
+          >
+            {isResetting ? <Loader2 className="animate-spin w-4 h-4" /> : <RefreshCw className="w-4 h-4" />} Reset Checklists
+          </Button>
+        )}
+
+        {isMember && trip.status !== 'Completed' && (
+          <Button 
+            className="w-full h-14 sm:h-16 bg-teal-500 hover:bg-teal-600 text-black font-black rounded-2xl sm:rounded-3xl gap-3 text-base sm:text-lg shadow-xl shadow-teal-500/20 active:scale-95 transition-all"
+            onClick={() => markTripComplete(firestore, trip.id)}
+          >
+            <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> Complete Trip
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -1028,6 +1055,7 @@ function AddItineraryDialog({ firestore, tripId, days, defaultDay, trigger }: an
                     <SelectItem value="flight">✈️ Flight</SelectItem>
                     <SelectItem value="bus">🚌 Bus</SelectItem>
                     <SelectItem value="roadtrip">🚗 Road Trip</SelectItem>
+                    <SelectItem value="cab">🚕 Cab</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

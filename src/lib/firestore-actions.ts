@@ -10,6 +10,7 @@ import {
   Firestore,
   Timestamp,
   getDoc,
+  getDocs,
   deleteField
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -25,52 +26,42 @@ function cleanData(data: any) {
 }
 
 /**
- * Generates a specific checklist based on the category and mode of travel/stay.
+ * Generates a specific simplified checklist based on the category and mode of travel/stay.
  */
 function generateChecklist(category: string, mode?: string) {
   const checklists: Record<string, { item: string, status: string }[]> = {
     train: [
-      { item: "Tickets booked", status: "red" },
-      { item: "PNR number saved", status: "red" },
-      { item: "Confirmation status — Confirmed / RAC / Waitlist", status: "yellow" },
-      { item: "Tickets downloaded / screenshot saved", status: "red" },
-      { item: "Boarding station confirmed", status: "red" },
-      { item: "Everyone on the same booking", status: "yellow" },
+      { item: "Tickets booked for everyone", status: "red" },
+      { item: "PNR saved", status: "red" },
+      { item: "Boarding station noted", status: "red" },
       { item: "Departure time noted by everyone", status: "red" },
     ],
     flight: [
-      { item: "Tickets booked", status: "red" },
+      { item: "Tickets booked for everyone", status: "red" },
       { item: "Web check-in done", status: "red" },
       { item: "Boarding pass downloaded", status: "red" },
-      { item: "Baggage within allowed limits", status: "yellow" },
-      { item: "Cab to airport booked", status: "red" },
-      { item: "Reach airport 2hrs before departure", status: "yellow" },
-      { item: "Passport / ID ready", status: "red" },
+      { item: "Pickup / drop to airport confirmed", status: "red" },
     ],
     bus: [
-      { item: "Ticket booked", status: "red" },
-      { item: "Boarding point confirmed", status: "red" },
-      { item: "Bus operator contact saved", status: "yellow" },
-      { item: "Departure time noted", status: "red" },
-      { item: "Everyone has their ticket", status: "red" },
+      { item: "Tickets booked for everyone", status: "red" },
+      { item: "Boarding point noted", status: "red" },
+      { item: "Departure time noted by everyone", status: "red" },
     ],
     roadtrip: [
       { item: "Vehicle confirmed", status: "red" },
-      { item: "Driver confirmed and contact saved", status: "red" },
-      { item: "Fuel checked", status: "yellow" },
+      { item: "Pickup point and time set", status: "red" },
       { item: "Route saved on Google Maps", status: "yellow" },
-      { item: "Toll cash or FASTag ready", status: "yellow" },
-      { item: "Meeting point and departure time set", status: "red" },
-      { item: "Everyone knows the pickup point", status: "red" },
+    ],
+    cab: [
+      { item: "Cab booked", status: "red" },
+      { item: "Pickup point confirmed with everyone", status: "red" },
+      { item: "Driver contact saved", status: "red" },
     ],
     stay: [
       { item: "Booking confirmed", status: "red" },
-      { item: "Confirmation email / voucher saved", status: "red" },
-      { item: "Check-in time noted", status: "yellow" },
-      { item: "Check-out time noted", status: "yellow" },
-      { item: "Property contact number saved", status: "red" },
-      { item: "Address saved on Google Maps", status: "yellow" },
-      { item: "Early check-in requested if needed", status: "yellow" },
+      { item: "Confirmation voucher saved", status: "red" },
+      { item: "Check-in and check-out time noted", status: "yellow" },
+      { item: "Property address saved on Maps", status: "yellow" },
     ],
   };
 
@@ -251,6 +242,10 @@ export function updateItineraryItem(db: Firestore, tripId: string, itemId: strin
     updatedAt: serverTimestamp(),
   });
 
+  // If category or mode changed, we might need to regenerate the checklist
+  // But usually users want to keep their check marks if it's just a name change.
+  // We only regenerate if explicitly requested or on creation.
+
   updateDoc(itemRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       path: itemRef.path,
@@ -311,6 +306,37 @@ export async function updateChecklistItemStatus(db: Firestore, tripId: string, i
   } catch (error) {
     console.error("Error updating checklist status:", error);
   }
+}
+
+/**
+ * Resets all checklists for itinerary items in a trip to the current simplified versions.
+ */
+export async function resetAllChecklists(db: Firestore, tripId: string) {
+  const itemsRef = collection(db, "trips", tripId, "itineraryItems");
+  const snap = await getDocs(itemsRef);
+  
+  const updates = snap.docs.map(async (docSnap) => {
+    const data = docSnap.data();
+    const newChecklist = generateChecklist(data.category, data.mode);
+    if (newChecklist.length > 0) {
+      await updateDoc(
+        doc(db, "trips", tripId, "itineraryItems", docSnap.id),
+        { 
+          checklist: newChecklist,
+          updatedAt: serverTimestamp()
+        }
+      );
+    }
+  });
+
+  await Promise.all(updates);
+  
+  // Also mark the trip as having its checklists reset to hide the button
+  const tripRef = doc(db, 'trips', tripId);
+  await updateDoc(tripRef, { 
+    checklistsReset: true,
+    updatedAt: serverTimestamp() 
+  });
 }
 
 export function addSuggestion(db: Firestore, tripId: string, suggestion: any) {
