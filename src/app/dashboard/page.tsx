@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,6 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
 import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
 import { toDate } from '@/lib/utils';
@@ -37,6 +36,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<any>(null);
 
+  // Protection & Redirect Logic
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/');
