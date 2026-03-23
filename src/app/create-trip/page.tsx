@@ -8,10 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Copy, Share2, ArrowRight, Compass, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
+import { Copy, Share2, ArrowRight, Compass, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -32,8 +30,8 @@ function CreateTripContent() {
 
   const [name, setName] = useState('');
   const [destination, setDestination] = useState('');
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [budget, setBudget] = useState('');
   const [vibe, setVibe] = useState('Mid-Range');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -212,31 +210,32 @@ function CreateTripContent() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full h-12 justify-start text-left font-normal bg-black/20 border-white/10 rounded-xl", !startDate && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4 text-[#0D9488]" />
-                      {startDate ? format(startDate, "PPP") : "Pick date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10">
-                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <input
+                  type="date"
+                  className="w-full bg-black/20 border border-white/10 h-12 rounded-xl px-4 text-white focus:border-[#0D9488] outline-none appearance-none cursor-pointer"
+                  style={{ colorScheme: "dark" }}
+                  value={startDate ? format(startDate, "yyyy-MM-dd") : ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) setStartDate(new Date(val));
+                  }}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">End Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full h-12 justify-start text-left font-normal bg-black/20 border-white/10 rounded-xl", !endDate && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4 text-[#0D9488]" />
-                      {endDate ? format(endDate, "PPP") : "Pick date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10">
-                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <input
+                  type="date"
+                  className="w-full bg-black/20 border border-white/10 h-12 rounded-xl px-4 text-white focus:border-[#0D9488] outline-none appearance-none cursor-pointer"
+                  style={{ colorScheme: "dark" }}
+                  min={startDate ? format(startDate, "yyyy-MM-dd") : ""}
+                  value={endDate ? format(endDate, "yyyy-MM-dd") : ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) setEndDate(new Date(val));
+                  }}
+                  required
+                />
               </div>
             </div>
 

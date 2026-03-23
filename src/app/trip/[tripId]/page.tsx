@@ -29,8 +29,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Accordion,
   AccordionContent,
@@ -52,9 +50,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Calendar as CalendarIcon, CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
-  Plus, MapPin, CheckCircle2, Circle, Trash2, 
-  ExternalLink, Sparkles, AlertTriangle, Bus, Plane, Train, Info, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit
+  CheckSquare, Lightbulb, Package, PieChart as PieChartIcon, 
+  Plus, MapPin, CheckCircle2, Trash2, 
+  ExternalLink, Sparkles, Bus, Plane, Train, ArrowRight, Loader2, Share2, Sun, Sunset, Moon, Coffee, MessageCircle, Settings, Edit, Calendar as CalendarIcon
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn, toDate } from '@/lib/utils';
@@ -217,9 +215,9 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
   const [destination, setDestination] = useState(trip.destination);
   const [startDate, setStartDate] = useState<Date | undefined>(toDate(trip.startDate));
   const [endDate, setEndDate] = useState<Date | undefined>(toDate(trip.endDate));
+  const [budgetPerHead, setBudgetPerHead] = useState(trip.budgetPerHead?.toString() || "");
+  const [vibe, setVibe] = useState(trip.vibe || "Mid-Range");
   
-  const [startOpen, setStartOpen] = useState(false);
-  const [endOpen, setEndOpen] = useState(false);
   const [open, setOpen] = useState(false);
 
   const handleUpdate = () => {
@@ -228,10 +226,12 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
       return;
     }
     updateTripDetails(firestore, trip.id, {
-      name,
-      destination,
+      name: name.trim(),
+      destination: destination.trim(),
       startDate,
-      endDate
+      endDate,
+      budgetPerHead: Number(budgetPerHead),
+      vibe
     });
     setOpen(false);
     toast({ title: 'Trip updated!' });
@@ -244,9 +244,12 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
           <Settings className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md w-[95%] rounded-[2.5rem] bg-[#0F172A] border-white/5 shadow-2xl p-8 backdrop-blur-3xl overflow-visible">
+      <DialogContent 
+        className="max-w-md w-[95%] rounded-[2.5rem] bg-[#0F172A] border-white/5 shadow-2xl p-8 backdrop-blur-3xl overflow-visible"
+        onClick={(e) => e.stopPropagation()}
+      >
         <DialogHeader><DialogTitle className="text-white font-black text-2xl tracking-tighter">Edit Trip Details</DialogTitle></DialogHeader>
-        <div className="space-y-5 py-4">
+        <div className="space-y-5 py-4" onClick={(e) => e.stopPropagation()}>
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Trip Name</Label>
             <Input className="bg-white/[0.03] border-white/5 h-14 rounded-2xl focus:border-teal-500/50" value={name} onChange={e => setName(e.target.value)} />
@@ -259,50 +262,49 @@ function EditTripDialog({ firestore, trip }: { firestore: Firestore, trip: any }
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Start Date</Label>
-              <Popover open={startOpen} onOpenChange={setStartOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl transition-all hover:border-teal-500/50", !startDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4 text-teal-500" />
-                    <span>{startDate ? format(startDate, "MMM do, yyyy") : "Pick start date"}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[100]" align="start">
-                  <Calendar 
-                    mode="single" 
-                    selected={startDate} 
-                    onSelect={(date) => {
-                      setStartDate(date);
-                      setStartOpen(false);
-                    }} 
-                    initialFocus 
-                  />
-                </PopoverContent>
-              </Popover>
+              <input
+                type="date"
+                value={startDate ? format(startDate, "yyyy-MM-dd") : ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) setStartDate(new Date(val));
+                }}
+                className="w-full bg-white/[0.03] text-white border border-white/5 rounded-2xl px-4 h-14 focus:border-teal-500/50 outline-none appearance-none cursor-pointer"
+                style={{ colorScheme: "dark" }}
+              />
             </div>
             
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">End Date</Label>
-              <Popover open={endOpen} onOpenChange={setEndOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full h-14 justify-start text-left font-normal bg-white/[0.03] border-white/5 rounded-2xl transition-all hover:border-teal-500/50", !endDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4 text-teal-500" />
-                    <span>{endDate ? format(endDate, "MMM do, yyyy") : "Pick end date"}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#0F172A] border-white/10 z-[100]" align="start">
-                  <Calendar 
-                    mode="single" 
-                    selected={endDate} 
-                    onSelect={(date) => {
-                      setEndDate(date);
-                      setEndOpen(false);
-                    }}
-                    disabled={(date) => startDate ? date < startDate : false}
-                    initialFocus 
-                  />
-                </PopoverContent>
-              </Popover>
+              <input
+                type="date"
+                value={endDate ? format(endDate, "yyyy-MM-dd") : ""}
+                min={startDate ? format(startDate, "yyyy-MM-dd") : ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) setEndDate(new Date(val));
+                }}
+                className="w-full bg-white/[0.03] text-white border border-white/5 rounded-2xl px-4 h-14 focus:border-teal-500/50 outline-none appearance-none cursor-pointer"
+                style={{ colorScheme: "dark" }}
+              />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Budget Per Head (₹)</Label>
+            <Input type="number" className="bg-white/[0.03] border-white/5 h-14 rounded-2xl focus:border-teal-500/50" value={budgetPerHead} onChange={e => setBudgetPerHead(e.target.value)} />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Vibe</Label>
+            <Select value={vibe} onValueChange={setVibe}>
+              <SelectTrigger className="bg-white/[0.03] border-white/5 h-14 rounded-2xl focus:border-teal-500/50"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-[#0F172A] border-white/10 text-white rounded-2xl">
+                <SelectItem value="Budget">Budget 🏕️</SelectItem>
+                <SelectItem value="Mid-Range">Mid-Range 🏨</SelectItem>
+                <SelectItem value="Luxury">Luxury 👑</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <Button className="w-full h-16 bg-teal-500 hover:bg-teal-600 font-black rounded-2xl text-lg shadow-2xl shadow-teal-500/30 transition-all active:scale-95" onClick={handleUpdate}>Save Changes</Button>
