@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Compass, Loader2, ArrowRight, User, ArrowLeft, Mail } from 'lucide-react';
+import { Compass, Loader2, ArrowLeft, User, Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -67,8 +66,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4 relative">
       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 group text-zinc-400 hover:text-white transition-colors">
-        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="text-sm font-bold uppercase tracking-widest">Back to Home</span>
+        <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
       </Link>
 
       <Link href="/" className="mb-12 flex items-center gap-2">
