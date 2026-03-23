@@ -26,31 +26,29 @@ function cleanData(data: any) {
 }
 
 /**
- * Generates a specific simplified checklist based on the category and mode of travel/stay.
+ * Generates a specific simplified checklist (max 3 items) based on the category and mode of travel/stay.
  */
 function generateChecklist(category: string, mode?: string) {
   const checklists: Record<string, { item: string, status: string }[]> = {
     train: [
       { item: "Tickets booked for everyone", status: "red" },
       { item: "PNR saved", status: "red" },
-      { item: "Boarding station noted", status: "red" },
-      { item: "Departure time noted by everyone", status: "red" },
+      { item: "Boarding station and time noted", status: "red" },
     ],
     flight: [
       { item: "Tickets booked for everyone", status: "red" },
-      { item: "Web check-in done", status: "red" },
-      { item: "Boarding pass downloaded", status: "red" },
-      { item: "Pickup / drop to airport confirmed", status: "red" },
+      { item: "Web check-in and boarding pass done", status: "red" },
+      { item: "Pickup to airport confirmed", status: "red" },
     ],
     bus: [
       { item: "Tickets booked for everyone", status: "red" },
-      { item: "Boarding point noted", status: "red" },
+      { item: "Boarding point confirmed", status: "red" },
       { item: "Departure time noted by everyone", status: "red" },
     ],
     roadtrip: [
-      { item: "Vehicle confirmed", status: "red" },
+      { item: "Vehicle and driver confirmed", status: "red" },
       { item: "Pickup point and time set", status: "red" },
-      { item: "Route saved on Google Maps", status: "yellow" },
+      { item: "Route saved on Google Maps", status: "red" },
     ],
     cab: [
       { item: "Cab booked", status: "red" },
@@ -59,9 +57,8 @@ function generateChecklist(category: string, mode?: string) {
     ],
     stay: [
       { item: "Booking confirmed", status: "red" },
-      { item: "Confirmation voucher saved", status: "red" },
-      { item: "Check-in and check-out time noted", status: "yellow" },
-      { item: "Property address saved on Maps", status: "yellow" },
+      { item: "Check-in time and address noted", status: "red" },
+      { item: "Property contact saved", status: "red" },
     ],
   };
 
@@ -242,10 +239,6 @@ export function updateItineraryItem(db: Firestore, tripId: string, itemId: strin
     updatedAt: serverTimestamp(),
   });
 
-  // If category or mode changed, we might need to regenerate the checklist
-  // But usually users want to keep their check marks if it's just a name change.
-  // We only regenerate if explicitly requested or on creation.
-
   updateDoc(itemRef, data).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       path: itemRef.path,
@@ -309,7 +302,7 @@ export async function updateChecklistItemStatus(db: Firestore, tripId: string, i
 }
 
 /**
- * Resets all checklists for itinerary items in a trip to the current simplified versions.
+ * Resets all checklists for itinerary items in a trip to the current simplified 3-item versions.
  */
 export async function resetAllChecklists(db: Firestore, tripId: string) {
   const itemsRef = collection(db, "trips", tripId, "itineraryItems");
@@ -331,10 +324,10 @@ export async function resetAllChecklists(db: Firestore, tripId: string) {
 
   await Promise.all(updates);
   
-  // Also mark the trip as having its checklists reset to hide the button
+  // Mark the trip as having its checklists reset to avoid infinite silent loops
   const tripRef = doc(db, 'trips', tripId);
   await updateDoc(tripRef, { 
-    checklistsReset: true,
+    checklistsResetV2: true, // Use a new version flag for the 3-item reset
     updatedAt: serverTimestamp() 
   });
 }

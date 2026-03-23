@@ -149,6 +149,13 @@ export default function TripDetailsPage() {
     }
   }, [isTripLoading, isUserLoading, user, trip, isMember, tripId, router]);
 
+  // Silent, automatic checklist reset for the simplified 3-item format
+  useEffect(() => {
+    if (tripId && isOrganizer && firestore && trip && !trip.checklistsResetV2) {
+      resetAllChecklists(firestore, tripId);
+    }
+  }, [tripId, isOrganizer, firestore, trip]);
+
   useEffect(() => {
     if (tripId) {
       const justJoined = sessionStorage.getItem("justJoined");
@@ -572,10 +579,10 @@ function ChecklistTab({ firestore, trip, itinerary, isMember, isOrganizer }: any
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-black text-white truncate">{item.name}</h3>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Day {item.dayNumber}</p>
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Day {item.dayNumber}</p>
                 </div>
                 <div className="shrink-0">
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                  <span className="text-xs text-zinc-400">
                     {item.checklist.filter((c: any) => c.status === "green").length}/{item.checklist.length} done
                   </span>
                 </div>
@@ -594,13 +601,13 @@ function ChecklistTab({ firestore, trip, itinerary, isMember, isOrganizer }: any
                       )}
                     />
                     <span className={cn(
-                      "flex-1 text-xs font-bold transition-all truncate",
+                      "flex-1 text-sm font-bold transition-all truncate",
                       check.status === "green" ? "text-zinc-600 line-through" : "text-zinc-300"
                     )}>
                       {check.item}
                     </span>
                     <span className={cn(
-                      "text-[9px] font-black uppercase tracking-widest shrink-0",
+                      "text-xs font-bold shrink-0",
                       check.status === "green" ? "text-teal-500" :
                       check.status === "yellow" ? "text-amber-500" : "text-red-500"
                     )}>
@@ -797,8 +804,6 @@ function PackingTab({ firestore, trip, packing, isMember }: any) {
 }
 
 function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, isOrganizer }: any) {
-  const [isResetting, setIsResetting] = useState(false);
-  
   const totalPlanned = itinerary?.reduce((sum: number, i: any) => sum + (i.plannedBudget || 0), 0) || 0;
   const totalActual = itinerary?.reduce((sum: number, i: any) => sum + (i.actualBudget || 0), 0) || 0;
 
@@ -814,19 +819,6 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
     const link = `${window.location.origin}/join/${trip.id}`;
     navigator.clipboard.writeText(link);
     toast({ title: 'Link Copied!', description: 'Share this with your gang.' });
-  };
-
-  const handleResetChecklists = async () => {
-    if (!isOrganizer) return;
-    setIsResetting(true);
-    try {
-      await resetAllChecklists(firestore, trip.id);
-      toast({ title: "Checklists Simplified!", description: "All trip tasks have been updated." });
-    } catch (error) {
-      toast({ variant: 'destructive', title: "Reset Failed", description: "Try again later." });
-    } finally {
-      setIsResetting(false);
-    }
   };
 
   return (
@@ -949,16 +941,6 @@ function SummaryTab({ firestore, trip, itinerary, members, isAdmin, isMember, is
             onClick={handleShare}
           >
             <Share2 className="w-5 h-5" /> Share Invite Link
-          </Button>
-        )}
-
-        {isOrganizer && !trip.checklistsReset && (
-          <Button 
-            className="w-full h-14 sm:h-16 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-black rounded-2xl sm:rounded-3xl gap-3 text-xs sm:text-sm uppercase tracking-widest border border-amber-500/20 active:scale-95 transition-all"
-            onClick={handleResetChecklists}
-            disabled={isResetting}
-          >
-            {isResetting ? <Loader2 className="animate-spin w-4 h-4" /> : <RefreshCw className="w-4 h-4" />} Reset Checklists
           </Button>
         )}
 
