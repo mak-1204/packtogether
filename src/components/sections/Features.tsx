@@ -1,4 +1,3 @@
-
 import { Map, Banknote, Bot } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -22,17 +21,17 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="py-24 px-6 md:px-12 bg-background">
+    <section className="py-24 px-4 bg-background overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="flex gap-4 overflow-x-auto px-4 pb-8 snap-x snap-mandatory scrollbar-none md:grid md:grid-cols-3 md:overflow-visible">
           {features.map((feature, index) => (
-            <Card key={index} className="bg-card border-none shadow-xl hover:shadow-primary/5 transition-all duration-300 group">
+            <Card key={index} className="snap-start flex-shrink-0 w-72 md:w-full bg-card border-none shadow-xl hover:shadow-primary/5 transition-all duration-300 group">
               <CardContent className="p-8">
                 <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                   <feature.icon className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4 font-headline text-white">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed text-sm">
                   {feature.description}
                 </p>
               </CardContent>

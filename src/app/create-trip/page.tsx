@@ -119,20 +119,20 @@ function CreateTripContent() {
   if (createdTripId) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-white/5 bg-white/5 shadow-2xl rounded-[2.5rem] overflow-hidden">
-          <CardHeader className="text-center pt-10">
-            <div className="mx-auto w-20 h-20 bg-[#0D9488]/20 rounded-full flex items-center justify-center mb-6">
-              <CheckCircle2 className="w-10 h-10 text-[#0D9488]" />
+        <Card className="max-w-md w-full border-white/5 bg-white/5 shadow-2xl rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="text-center pt-8 sm:pt-10">
+            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-[#0D9488]/20 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-[#0D9488]" />
             </div>
-            <CardTitle className="text-3xl font-black text-white">Trip Ready! 🚀</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl font-black text-white">Trip Ready! 🚀</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8 px-8 pb-10">
+          <CardContent className="space-y-6 sm:space-y-8 px-6 sm:px-8 pb-10">
             <div className="text-center text-zinc-400 text-sm leading-relaxed">
               Invite your gang using this link. They can join instantly even without an account.
             </div>
             
             <div className="bg-black/40 p-4 rounded-2xl flex items-center gap-3 border border-white/5 group transition-colors hover:border-[#0D9488]/30">
-              <span className="text-xs truncate flex-1 font-mono text-zinc-400">{shareLink}</span>
+              <span className="text-[10px] sm:text-xs truncate flex-1 font-mono text-zinc-400">{shareLink}</span>
               <Button 
                 size="icon" 
                 variant="ghost" 
@@ -146,9 +146,9 @@ function CreateTripContent() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4">
               <Button 
-                className="w-full h-14 rounded-2xl bg-[#25D366] hover:bg-[#25D366]/90 text-white font-bold gap-3 text-lg" 
+                className="w-full h-12 sm:h-14 rounded-2xl bg-[#25D366] hover:bg-[#25D366]/90 text-white font-bold gap-3 text-base sm:text-lg" 
                 onClick={() => {
                   window.open(`https://wa.me/?text=Hey! Join our trip to ${destination} on PackTogether: ${shareLink}`, '_blank');
                 }}
@@ -156,7 +156,7 @@ function CreateTripContent() {
                 <Share2 className="w-5 h-5" /> Share on WhatsApp
               </Button>
               <Link href={`/trip/${createdTripId}`} className="w-full">
-                <Button className="w-full h-14 rounded-2xl bg-[#0D9488] hover:bg-[#0D9488]/90 text-white font-bold gap-3 text-lg">
+                <Button className="w-full h-12 sm:h-14 rounded-2xl bg-[#0D9488] hover:bg-[#0D9488]/90 text-white font-bold gap-3 text-base sm:text-lg">
                   Go to Trip <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
@@ -168,27 +168,27 @@ function CreateTripContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4 relative">
-      <Link href="/dashboard" className="absolute top-8 left-8 flex items-center gap-2 group text-zinc-400 hover:text-white transition-colors">
+    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center px-4 py-8 relative">
+      <Link href="/dashboard" className="absolute top-6 left-6 flex items-center gap-2 group text-zinc-400 hover:text-white transition-colors">
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
       </Link>
 
       <Link href="/dashboard" className="mb-8 flex items-center gap-2">
-        <Compass className="w-8 h-8 text-[#0D9488]" />
-        <span className="text-xl font-black tracking-tighter text-white">PackTogether</span>
+        <Compass className="w-7 h-7 text-[#0D9488]" />
+        <span className="text-lg font-black tracking-tighter text-white">PackTogether</span>
       </Link>
 
-      <Card className="max-w-[480px] w-full border-white/5 bg-white/5 shadow-2xl rounded-[2.5rem]">
-        <CardHeader className="pt-8 text-center">
-          <CardTitle className="text-2xl font-black text-white tracking-tight">Plan a New Trip ✈️</CardTitle>
-          <p className="text-zinc-500 text-xs mt-1 uppercase font-black tracking-widest">Your Gang. One Plan.</p>
+      <Card className="w-full max-w-md border-white/5 bg-white/5 shadow-2xl rounded-[2rem] sm:rounded-[2.5rem]">
+        <CardHeader className="pt-8 text-center px-6">
+          <CardTitle className="text-xl sm:text-2xl font-black text-white tracking-tight">Plan a New Trip ✈️</CardTitle>
+          <p className="text-zinc-500 text-[10px] mt-1 uppercase font-black tracking-widest">Your Gang. One Plan.</p>
         </CardHeader>
-        <CardContent className="px-8 pb-10">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="px-6 sm:px-8 pb-10">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div className="space-y-2">
               <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Trip Name</Label>
               <Input 
-                className="bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488] text-white" 
+                className="bg-black/20 border-white/10 h-11 sm:h-12 rounded-xl focus:border-[#0D9488] text-white text-sm" 
                 placeholder="e.g. Ooty Escapade" 
                 value={name} 
                 onChange={e => setName(e.target.value)} 
@@ -199,7 +199,7 @@ function CreateTripContent() {
             <div className="space-y-2">
               <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Destination</Label>
               <Input 
-                className="bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488] text-white" 
+                className="bg-black/20 border-white/10 h-11 sm:h-12 rounded-xl focus:border-[#0D9488] text-white text-sm" 
                 placeholder="e.g. Ooty, Tamil Nadu" 
                 value={destination} 
                 onChange={e => setDestination(e.target.value)} 
@@ -207,12 +207,12 @@ function CreateTripContent() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Start Date</Label>
                 <input
                   type="date"
-                  className="w-full bg-black/20 border border-white/10 h-12 rounded-xl px-4 text-white focus:border-[#0D9488] outline-none appearance-none cursor-pointer"
+                  className="w-full bg-black/20 border border-white/10 h-11 sm:h-12 rounded-xl px-4 text-white focus:border-[#0D9488] outline-none appearance-none cursor-pointer text-sm"
                   style={{ colorScheme: "dark" }}
                   value={startDate ? format(startDate, "yyyy-MM-dd") : ""}
                   onChange={(e) => {
@@ -226,7 +226,7 @@ function CreateTripContent() {
                 <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">End Date</Label>
                 <input
                   type="date"
-                  className="w-full bg-black/20 border border-white/10 h-12 rounded-xl px-4 text-white focus:border-[#0D9488] outline-none appearance-none cursor-pointer"
+                  className="w-full bg-black/20 border border-white/10 h-11 sm:h-12 rounded-xl px-4 text-white focus:border-[#0D9488] outline-none appearance-none cursor-pointer text-sm"
                   style={{ colorScheme: "dark" }}
                   min={startDate ? format(startDate, "yyyy-MM-dd") : ""}
                   value={endDate ? format(endDate, "yyyy-MM-dd") : ""}
@@ -242,10 +242,10 @@ function CreateTripContent() {
             <div className="space-y-2">
               <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Budget Per Head</Label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0D9488] font-bold">₹</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0D9488] font-bold text-sm">₹</span>
                 <Input 
                   type="number" 
-                  className="pl-8 bg-black/20 border-white/10 h-12 rounded-xl focus:border-[#0D9488] text-white" 
+                  className="pl-8 bg-black/20 border-white/10 h-11 sm:h-12 rounded-xl focus:border-[#0D9488] text-white text-sm" 
                   placeholder="5000" 
                   value={budget} 
                   onChange={e => setBudget(e.target.value)} 
@@ -256,21 +256,21 @@ function CreateTripContent() {
 
             <div className="space-y-2">
               <Label className="text-zinc-400 font-bold ml-1 uppercase text-[10px] tracking-widest">Vibe</Label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {VIBES.map(v => (
                   <button
                     key={v.id}
                     type="button"
                     onClick={() => setVibe(v.id)}
                     className={cn(
-                      "flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-300",
+                      "flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl sm:rounded-2xl border-2 transition-all duration-300",
                       vibe === v.id 
-                        ? "border-[#0D9488] bg-[#0D9488]/10 shadow-[0_0_20px_rgba(13,148,136,0.15)] scale-105" 
+                        ? "border-[#0D9488] bg-[#0D9488]/10 shadow-[0_0_20px_rgba(13,148,136,0.15)]" 
                         : "border-white/5 bg-black/20 hover:bg-white/5"
                     )}
                   >
-                    <span className="text-2xl mb-1">{v.icon}</span>
-                    <span className="text-[10px] font-black uppercase tracking-tight text-white">{v.label}</span>
+                    <span className="text-xl sm:text-2xl mb-1">{v.icon}</span>
+                    <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-tight text-white">{v.label}</span>
                   </button>
                 ))}
               </div>
@@ -278,7 +278,7 @@ function CreateTripContent() {
 
             <Button 
               type="submit" 
-              className="w-full h-14 bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-lg font-black rounded-2xl mt-4 shadow-xl shadow-[#0D9488]/20 transition-all active:scale-95" 
+              className="w-full h-12 sm:h-14 bg-[#0D9488] hover:bg-[#0D9488]/90 text-white text-base sm:text-lg font-black rounded-2xl mt-4 shadow-xl shadow-[#0D9488]/20 transition-all active:scale-95" 
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Creating...' : 'Create Trip & Get Link'}
